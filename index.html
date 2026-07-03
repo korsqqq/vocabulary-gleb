@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Quiz — Тренажёр английских слов</title>
+<!--
+═══════════════════════════════════════════════════════════════════
+  ИНСТРУКЦИЯ (при добавлении нового набора слов):
+  Замени ТОЛЬКО содержимое между маркерами
+  "DATEN-BLOCK START" и "DATEN-BLOCK ENDE". Больше НИЧЕГО не меняй.
+
+  Схема одной записи:
+  { cat:"Школа",     // тема (любое название по-русски)
+    grp:"Глаголы",   // обобщённая группа: Существительные / Глаголы /
+                     //   Прилагательные / Числа / Другое
+    en:"to run",     // английское слово (сущ. желательно с a/an; глагол с to)
+    ru:"бежать" }    // русский перевод (варианты через запятую или /)
+
+  Категории и группы создаются автоматически из полей cat и grp.
+═══════════════════════════════════════════════════════════════════
+-->
+<style>
+:root{
+  --paper:#F6F8F6;
+  --card:#FFFFFF;
+  --ink:#14532D;
+  --ink-soft:#5F7468;
+  --line:#D9E0DA;
+  --rule:#B9CFC0;
+  --red:#C8372D;
+  --red-soft:#FBEAE8;
+  --green:#2E7D4F;
+  --green-soft:#E8F4EC;
+  --amber:#A8731E;
+  --amber-soft:#FBF3E2;
+  --blue:#1B3A6B;
+  --blue-soft:#EEF2FA;
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);
+  background-image:linear-gradient(transparent 31px, rgba(20,83,45,.05) 32px);
+  background-size:100% 32px;
+  color:var(--ink);
+  display:flex;justify-content:center;
+  padding:24px 16px 60px;
+}
+.app{width:100%;max-width:560px}
+
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-family:Georgia,"Iowan Old Style",serif;font-size:1.45rem;letter-spacing:.01em}
+h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weight:400;color:var(--ink-soft);margin-top:2px}
+.set-title{font-size:.8rem;color:var(--ink-soft);text-align:right}
+
+.screen{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:0 2px 10px rgba(20,83,45,.06);padding:26px 24px;display:none}
+.screen.active{display:block}
+
+.start h2{font-family:Georgia,serif;font-size:1.15rem;margin-bottom:6px}
+.start p.meta{color:var(--ink-soft);font-size:.88rem;margin-bottom:20px}
+.opt-group{margin-bottom:20px}
+.opt-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.mini-link{font-size:.78rem;color:var(--blue);background:none;border:none;cursor:pointer;text-decoration:underline;text-transform:none;letter-spacing:0}
+.mode-row{display:flex;gap:10px}
+.mode-btn{flex:1;padding:14px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff;
+  font-size:.95rem;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .15s, background .15s}
+.mode-btn .dir{display:block;font-size:1.05rem}
+.mode-btn .expl{display:block;font-size:.75rem;font-weight:400;color:var(--ink-soft);margin-top:3px}
+.mode-btn.selected{border-color:var(--ink);background:#EFF6F1}
+
+.cat-grid{display:flex;flex-wrap:wrap;gap:8px}
+.cat-chip{display:flex;align-items:center;gap:7px;padding:9px 14px;border:1.5px solid var(--line);
+  border-radius:24px;background:#fff;font-size:.9rem;font-weight:600;color:var(--ink);cursor:pointer;
+  user-select:none;transition:border-color .15s, background .15s}
+.cat-chip .cnt{font-size:.75rem;font-weight:400;color:var(--ink-soft)}
+.cat-chip.selected{border-color:var(--ink);background:#EFF6F1}
+.cat-chip.selected::before{content:"\2713 ";font-weight:700}
+
+.count-row{display:flex;gap:8px;flex-wrap:wrap}
+.count-btn{padding:10px 18px;border:1.5px solid var(--line);border-radius:10px;background:#fff;
+  font-size:.92rem;font-weight:600;color:var(--ink);cursor:pointer}
+.count-btn.selected{border-color:var(--ink);background:#EFF6F1}
+.count-input{width:80px;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-size:.92rem;
+  text-align:center;outline:none;color:var(--ink)}
+.count-input:focus{border-color:var(--ink)}
+
+.toggle-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:.9rem;cursor:pointer;user-select:none}
+.toggle-row input{width:17px;height:17px;accent-color:var(--ink)}
+.start-summary{font-size:.85rem;color:var(--ink-soft);margin-top:4px;min-height:1.2em}
+.big-start{width:100%;margin-top:12px;padding:15px;border:none;border-radius:10px;background:var(--ink);
+  color:#fff;font-size:1.05rem;font-weight:700;cursor:pointer}
+.big-start:hover{background:#0E3D21}
+.big-start:disabled{opacity:.5;cursor:default}
+
+.progress-wrap{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.progress-bar{flex:1;height:6px;background:#E9EFEA;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:var(--ink);border-radius:3px;transition:width .3s}
+.progress-num{font-size:.8rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.round-badge{font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--amber);background:var(--amber-soft);
+  border-radius:20px;padding:3px 10px;display:none}
+.round-badge.show{display:inline-block}
+.streak{font-size:.85rem;white-space:nowrap;display:none}
+.streak.show{display:inline}
+
+.cat-tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--blue);
+  background:var(--blue-soft);border-radius:20px;padding:3px 11px;margin-bottom:10px}
+.prompt-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px}
+.prompt-row{display:flex;align-items:center;gap:12px;margin-bottom:22px;min-height:1.2em}
+.prompt-word{font-family:Georgia,serif;font-size:1.9rem;line-height:1.2}
+.speak-btn{flex:none;width:42px;height:42px;border-radius:50%;border:1.5px solid var(--line);background:#fff;
+  font-size:1.2rem;cursor:pointer;display:none;align-items:center;justify-content:center;color:var(--ink);transition:background .15s}
+.speak-btn.show{display:inline-flex}
+.speak-btn:hover{background:#EFF6F1}
+
+.answer-zone{position:relative;margin-bottom:8px}
+.answer-input{
+  width:100%;border:none;border-bottom:2px solid var(--rule);background:transparent;
+  font-family:Georgia,serif;font-size:1.35rem;color:var(--ink);padding:6px 2px 8px;outline:none;
+}
+.answer-input:focus{border-bottom-color:var(--ink)}
+.answer-input:disabled{color:var(--ink-soft)}
+.answer-zone.wrong .answer-input{border-bottom-color:var(--red);
+  text-decoration:underline wavy var(--red) 2px;text-underline-offset:6px}
+.answer-zone.right .answer-input{border-bottom-color:var(--green)}
+
+.feedback{border-radius:10px;padding:13px 15px;font-size:.92rem;line-height:1.5;margin:14px 0 4px;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:var(--green-soft);color:var(--green)}
+.feedback.err{background:var(--red-soft);color:var(--red)}
+.feedback.info{background:var(--amber-soft);color:var(--amber)}
+.feedback .corr{font-family:Georgia,serif;font-weight:700}
+
+@keyframes correctPulse{
+  0%  {transform:scale(1);   box-shadow:0 2px 10px rgba(20,83,45,.06)}
+  30% {transform:scale(1.025);box-shadow:0 0 0 6px rgba(46,125,79,.18),0 4px 20px rgba(46,125,79,.25)}
+  60% {transform:scale(1.01); box-shadow:0 0 0 3px rgba(46,125,79,.10)}
+  100%{transform:scale(1);   box-shadow:0 2px 10px rgba(20,83,45,.06)}
+}
+@keyframes inputGlow{
+  0%  {box-shadow:none}
+  40% {box-shadow:0 0 0 4px rgba(46,125,79,.30)}
+  100%{box-shadow:none}
+}
+@keyframes feedbackSlide{
+  from{opacity:0;transform:translateY(-6px)}
+  to  {opacity:1;transform:translateY(0)}
+}
+@keyframes particleFly{
+  0%  {opacity:1;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(.4)}
+}
+#scrQuiz.correct-flash{animation:correctPulse .55s ease-out}
+.answer-zone.right .answer-input{animation:inputGlow .6s ease-out}
+.feedback.show{animation:feedbackSlide .2s ease-out}
+.particle{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:999;
+  animation:particleFly .7s ease-out forwards}
+
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.ctrl{padding:13px 10px;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;
+  border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:background .15s}
+.ctrl:hover:not(:disabled){background:#EFF6F1}
+.ctrl:disabled{opacity:.45;cursor:default}
+.ctrl.primary{grid-column:1 / -1;background:var(--ink);border-color:var(--ink);color:#fff;font-size:1rem;padding:15px}
+.ctrl.primary:hover:not(:disabled){background:#0E3D21}
+.ctrl.next-btn{grid-column:1 / -1;background:var(--green);border-color:var(--green);color:#fff;font-size:1.05rem;
+  padding:16px;font-weight:700;letter-spacing:.02em;
+  box-shadow:0 4px 14px rgba(46,125,79,.35)}
+.ctrl.next-btn:hover:not(:disabled){background:#256B42;box-shadow:0 6px 18px rgba(46,125,79,.45)}
+@keyframes nextAppear{
+  from{opacity:0;transform:translateY(8px) scale(.97)}
+  to  {opacity:1;transform:translateY(0) scale(1)}
+}
+.ctrl.next-btn.appear{animation:nextAppear .3s cubic-bezier(.22,1,.36,1)}
+
+.exit-link{display:block;margin:14px auto 0;background:none;border:none;color:var(--ink-soft);
+  font-size:.8rem;text-decoration:underline;cursor:pointer}
+
+.results h2{font-family:Georgia,serif;font-size:1.3rem;margin-bottom:4px}
+.score-line{font-size:.95rem;color:var(--ink-soft);margin-bottom:18px}
+.stat-row{display:flex;gap:10px;margin-bottom:22px}
+.stat{flex:1;text-align:center;border-radius:10px;padding:12px 6px}
+.stat .n{font-family:Georgia,serif;font-size:1.6rem;font-weight:700;display:block}
+.stat .l{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.stat.g{background:var(--green-soft);color:var(--green)}
+.stat.r{background:var(--red-soft);color:var(--red)}
+.res-list{border-top:1px solid var(--line);max-height:300px;overflow-y:auto;margin-bottom:20px}
+.res-item{display:flex;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:.92rem;align-items:center}
+.res-item .w-en{font-family:Georgia,serif;font-weight:600}
+.res-item .w-ru{color:var(--ink-soft)}
+.res-item .w-cat{font-size:.7rem;color:var(--blue);background:var(--blue-soft);border-radius:12px;padding:2px 8px;margin-left:6px}
+.res-item .mark{font-size:1rem}
+.res-actions{display:flex;flex-direction:column;gap:10px}
+.res-meta{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.res-meta .row{display:flex;gap:8px;font-size:.85rem;color:var(--ink-soft);line-height:1.45}
+.res-meta .row .ic{flex:none}
+.res-meta .chips{display:flex;flex-wrap:wrap;gap:6px}
+.res-meta .tchip{font-size:.74rem;font-weight:600;color:var(--blue);background:var(--blue-soft);border-radius:20px;padding:3px 10px}
+.res-meta .time-val{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+
+@media (max-width:420px){
+  .screen{padding:20px 16px}
+  .prompt-word{font-size:1.6rem}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Word Quiz<span class="sub">Тренажёр английских слов</span></h1>
+    <div class="set-title" id="setTitle"></div>
+  </header>
+
+  <!-- ════════ СТАРТ ════════ -->
+  <section class="screen start active" id="scrStart">
+    <h2>Настрой свой диктант</h2>
+    <p class="meta" id="metaCount"></p>
+
+    <div class="opt-group">
+      <span class="opt-label">Направление перевода</span>
+      <div class="mode-row">
+        <button class="mode-btn selected" id="modeRuEn">
+          <span class="dir">RU → EN</span>
+          <span class="expl">вижу русское — пишу английское</span>
+        </button>
+        <button class="mode-btn" id="modeEnRu">
+          <span class="dir">EN → RU</span>
+          <span class="expl">вижу английское — пишу русское</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="opt-group">
+      <span class="opt-label">Группировать по</span>
+      <div class="mode-row">
+        <button class="mode-btn selected" id="dimCat">
+          <span class="dir">Темам</span>
+          <span class="expl">еда, животные, школа…</span>
+        </button>
+        <button class="mode-btn" id="dimGrp">
+          <span class="dir">Типу слова</span>
+          <span class="expl">глаголы, прилагательные…</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="opt-group">
+      <span class="opt-label" id="catLabel">Категории слов
+        <span style="display:flex;gap:14px">
+          <button class="mini-link" id="btnAllCats">выбрать все</button>
+          <button class="mini-link" id="btnNoneCats">убрать выделение</button>
+        </span>
+      </span>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+
+    <div class="opt-group">
+      <span class="opt-label">Сколько слов</span>
+      <div class="count-row">
+        <button class="count-btn" data-n="10">10</button>
+        <button class="count-btn" data-n="15">15</button>
+        <button class="count-btn" data-n="20">20</button>
+        <button class="count-btn selected" data-n="all">Все</button>
+        <input class="count-input" id="countCustom" type="number" min="1" placeholder="своё">
+      </div>
+    </div>
+
+    <div class="opt-group">
+      <span class="opt-label">Настройки</span>
+      <label class="toggle-row"><input type="checkbox" id="optShuffle" checked> Перемешать слова</label>
+      <label class="toggle-row"><input type="checkbox" id="optRepeat" checked> Повторить ошибки в конце</label>
+      <label class="toggle-row"><input type="checkbox" id="optSpeak" checked> Озвучивать английские слова 🔊</label>
+      <label class="toggle-row"><input type="checkbox" id="optHard"> Сначала трудные слова</label>
+    </div>
+
+    <div class="start-summary" id="startSummary"></div>
+    <button class="big-start" id="btnStart">Начать диктант</button>
+  </section>
+
+  <!-- ════════ ДИКТАНТ ════════ -->
+  <section class="screen" id="scrQuiz">
+    <div class="progress-wrap">
+      <span class="round-badge" id="roundBadge">Работа над ошибками</span>
+      <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+      <span class="progress-num" id="progNum"></span>
+      <span class="streak" id="streak"></span>
+    </div>
+
+    <span class="cat-tag" id="catTag"></span>
+    <div class="prompt-label" id="promptLabel"></div>
+    <div class="prompt-row">
+      <div class="prompt-word" id="promptWord"></div>
+      <button class="speak-btn" id="btnSpeak" title="Послушать">🔊</button>
+    </div>
+
+    <div class="answer-zone" id="answerZone">
+      <input class="answer-input" id="answerInput" type="text" autocomplete="off"
+             autocapitalize="off" spellcheck="false" placeholder="напиши здесь…">
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="controls">
+      <button class="ctrl" id="btnDontKnow">Не знаю</button>
+      <button class="ctrl" id="btnBack">← Назад</button>
+      <button class="ctrl primary" id="btnCheck">Проверить ответ</button>
+      <button class="ctrl next-btn" id="btnSkipNext" style="display:none">Дальше →</button>
+    </div>
+    <button class="exit-link" id="btnExit">⟵ выйти к настройкам</button>
+  </section>
+
+  <!-- ════════ РЕЗУЛЬТАТЫ ════════ -->
+  <section class="screen results" id="scrResults">
+    <h2 id="resHead">Диктант окончен!</h2>
+    <p class="score-line" id="resScore"></p>
+    <div class="stat-row">
+      <div class="stat g"><span class="n" id="stOk">0</span><span class="l">верно</span></div>
+      <div class="stat r"><span class="n" id="stFail">0</span><span class="l">с ошибкой</span></div>
+    </div>
+    <div class="res-meta" id="resMeta"></div>
+    <div class="res-list" id="resList"></div>
+    <div class="res-actions">
+      <button class="ctrl primary" id="btnAgainSetup">Новый диктант (настройки)</button>
+      <button class="ctrl" id="btnAgainErrors" style="display:none">Повторить только ошибки</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ═══════════════════ DATEN-BLOCK START ═══════════════════ */
+const SET_TITLE = "Starter Book — словарь, 6 класс";
+const VOCAB = [
+  {cat:"Alphabet words", grp:"Существительные", en:"ant", ru:"муравей"},
+  {cat:"Alphabet words", grp:"Существительные", en:"bee", ru:"пчела"},
+  {cat:"Alphabet words", grp:"Существительные", en:"cat", ru:"кошка"},
+  {cat:"Alphabet words", grp:"Существительные", en:"dog", ru:"собака"},
+  {cat:"Alphabet words", grp:"Существительные", en:"elephant", ru:"слон"},
+  {cat:"Alphabet words", grp:"Существительные", en:"fox", ru:"лиса"},
+  {cat:"Alphabet words", grp:"Существительные", en:"giraffe", ru:"жираф"},
+  {cat:"Alphabet words", grp:"Существительные", en:"hippo", ru:"гиппопотам"},
+  {cat:"Alphabet words", grp:"Существительные", en:"iguana", ru:"игуана"},
+  {cat:"Alphabet words", grp:"Существительные", en:"jaguar", ru:"ягуар"},
+  {cat:"Alphabet words", grp:"Существительные", en:"kangaroo", ru:"кенгуру"},
+  {cat:"Alphabet words", grp:"Существительные", en:"lion", ru:"лев"},
+  {cat:"Alphabet words", grp:"Существительные", en:"monkey", ru:"обезьяна"},
+  {cat:"Alphabet words", grp:"Существительные", en:"newt", ru:"тритон"},
+  {cat:"Alphabet words", grp:"Существительные", en:"owl", ru:"сова"},
+  {cat:"Alphabet words", grp:"Существительные", en:"penguin", ru:"пингвин"},
+  {cat:"Alphabet words", grp:"Существительные", en:"quail", ru:"перепёлка"},
+  {cat:"Alphabet words", grp:"Существительные", en:"rabbit", ru:"кролик"},
+  {cat:"Alphabet words", grp:"Существительные", en:"snake", ru:"змея"},
+  {cat:"Alphabet words", grp:"Существительные", en:"tiger", ru:"тигр"},
+  {cat:"Alphabet words", grp:"Существительные", en:"unicorn", ru:"единорог"},
+  {cat:"Alphabet words", grp:"Существительные", en:"vole", ru:"полёвка"},
+  {cat:"Alphabet words", grp:"Существительные", en:"worm", ru:"червяк"},
+  {cat:"Alphabet words", grp:"Существительные", en:"xiphias", ru:"меч-рыба"},
+  {cat:"Alphabet words", grp:"Существительные", en:"yak", ru:"як"},
+  {cat:"Alphabet words", grp:"Существительные", en:"zebra", ru:"зебра"},
+  {cat:"Numbers", grp:"Числа", en:"one", ru:"один"},
+  {cat:"Numbers", grp:"Числа", en:"two", ru:"два"},
+  {cat:"Numbers", grp:"Числа", en:"three", ru:"три"},
+  {cat:"Numbers", grp:"Числа", en:"four", ru:"четыре"},
+  {cat:"Numbers", grp:"Числа", en:"five", ru:"пять"},
+  {cat:"Numbers", grp:"Числа", en:"six", ru:"шесть"},
+  {cat:"Numbers", grp:"Числа", en:"seven", ru:"семь"},
+  {cat:"Numbers", grp:"Числа", en:"eight", ru:"восемь"},
+  {cat:"Numbers", grp:"Числа", en:"nine", ru:"девять"},
+  {cat:"Numbers", grp:"Числа", en:"ten", ru:"десять"},
+  {cat:"Numbers", grp:"Числа", en:"eleven", ru:"одиннадцать"},
+  {cat:"Numbers", grp:"Числа", en:"twelve", ru:"двенадцать"},
+  {cat:"Numbers", grp:"Числа", en:"thirteen", ru:"тринадцать"},
+  {cat:"Numbers", grp:"Числа", en:"fourteen", ru:"четырнадцать"},
+  {cat:"Numbers", grp:"Числа", en:"fifteen", ru:"пятнадцать"},
+  {cat:"Numbers", grp:"Числа", en:"sixteen", ru:"шестнадцать"},
+  {cat:"Numbers", grp:"Числа", en:"seventeen", ru:"семнадцать"},
+  {cat:"Numbers", grp:"Числа", en:"eighteen", ru:"восемнадцать"},
+  {cat:"Numbers", grp:"Числа", en:"nineteen", ru:"девятнадцать"},
+  {cat:"Numbers", grp:"Числа", en:"twenty", ru:"двадцать"},
+  {cat:"Numbers", grp:"Числа", en:"thirty", ru:"тридцать"},
+  {cat:"Numbers", grp:"Числа", en:"forty", ru:"сорок"},
+  {cat:"Numbers", grp:"Числа", en:"fifty", ru:"пятьдесят"},
+  {cat:"Numbers", grp:"Числа", en:"sixty", ru:"шестьдесят"},
+  {cat:"Numbers", grp:"Числа", en:"seventy", ru:"семьдесят"},
+  {cat:"Numbers", grp:"Числа", en:"eighty", ru:"восемьдесят"},
+  {cat:"Numbers", grp:"Числа", en:"ninety", ru:"девяносто"},
+  {cat:"Numbers", grp:"Числа", en:"hundred", ru:"сто"},
+  {cat:"Colours", grp:"Прилагательные", en:"pink", ru:"розовый"},
+  {cat:"Colours", grp:"Прилагательные", en:"red", ru:"красный"},
+  {cat:"Colours", grp:"Прилагательные", en:"orange", ru:"оранжевый"},
+  {cat:"Colours", grp:"Прилагательные", en:"yellow", ru:"жёлтый"},
+  {cat:"Colours", grp:"Прилагательные", en:"green", ru:"зелёный"},
+  {cat:"Colours", grp:"Прилагательные", en:"blue", ru:"голубой / синий"},
+  {cat:"Colours", grp:"Прилагательные", en:"purple", ru:"фиолетовый"},
+  {cat:"Colours", grp:"Прилагательные", en:"black", ru:"чёрный"},
+  {cat:"Colours", grp:"Прилагательные", en:"brown", ru:"коричневый"},
+  {cat:"Colours", grp:"Прилагательные", en:"white", ru:"белый"},
+  {cat:"Colours", grp:"Прилагательные", en:"grey", ru:"серый"},
+  {cat:"Seasons", grp:"Существительные", en:"spring", ru:"весна"},
+  {cat:"Seasons", grp:"Существительные", en:"summer", ru:"лето"},
+  {cat:"Seasons", grp:"Существительные", en:"autumn", ru:"осень"},
+  {cat:"Seasons", grp:"Существительные", en:"winter", ru:"зима"},
+  {cat:"Months", grp:"Существительные", en:"January", ru:"январь"},
+  {cat:"Months", grp:"Существительные", en:"February", ru:"февраль"},
+  {cat:"Months", grp:"Существительные", en:"March", ru:"март"},
+  {cat:"Months", grp:"Существительные", en:"April", ru:"апрель"},
+  {cat:"Months", grp:"Существительные", en:"May", ru:"май"},
+  {cat:"Months", grp:"Существительные", en:"June", ru:"июнь"},
+  {cat:"Months", grp:"Существительные", en:"July", ru:"июль"},
+  {cat:"Months", grp:"Существительные", en:"August", ru:"август"},
+  {cat:"Months", grp:"Существительные", en:"September", ru:"сентябрь"},
+  {cat:"Months", grp:"Существительные", en:"October", ru:"октябрь"},
+  {cat:"Months", grp:"Существительные", en:"November", ru:"ноябрь"},
+  {cat:"Months", grp:"Существительные", en:"December", ru:"декабрь"},
+  {cat:"Days of the week", grp:"Существительные", en:"Sunday", ru:"воскресенье"},
+  {cat:"Days of the week", grp:"Существительные", en:"Monday", ru:"понедельник"},
+  {cat:"Days of the week", grp:"Существительные", en:"Tuesday", ru:"вторник"},
+  {cat:"Days of the week", grp:"Существительные", en:"Wednesday", ru:"среда"},
+  {cat:"Days of the week", grp:"Существительные", en:"Thursday", ru:"четверг"},
+  {cat:"Days of the week", grp:"Существительные", en:"Friday", ru:"пятница"},
+  {cat:"Days of the week", grp:"Существительные", en:"Saturday", ru:"суббота"},
+  {cat:"My family", grp:"Существительные", en:"a mother", ru:"мама / мать"},
+  {cat:"My family", grp:"Существительные", en:"a father", ru:"папа / отец"},
+  {cat:"My family", grp:"Существительные", en:"a sister", ru:"сестра"},
+  {cat:"My family", grp:"Существительные", en:"a brother", ru:"брат"},
+  {cat:"My family", grp:"Существительные", en:"a grandmother", ru:"бабушка"},
+  {cat:"My family", grp:"Существительные", en:"a grandfather", ru:"дедушка"},
+  {cat:"My family", grp:"Существительные", en:"an aunt", ru:"тётя"},
+  {cat:"My family", grp:"Существительные", en:"an uncle", ru:"дядя"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a puppy", ru:"щенок"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a kitten", ru:"котёнок"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a cock", ru:"петух"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a hen", ru:"курица"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a chick", ru:"цыплёнок"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a pig", ru:"свинья"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a cow", ru:"корова"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a goat", ru:"коза"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a horse", ru:"конь / лошадь"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a donkey", ru:"ослик"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a sheep", ru:"баран / овца"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a duck", ru:"утка"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a goose", ru:"гусь"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a duckling", ru:"утёнок"},
+  {cat:"Domestic animals", grp:"Существительные", en:"a turkey", ru:"индюк"},
+  {cat:"Wild animals", grp:"Существительные", en:"a wolf", ru:"волк"},
+  {cat:"Wild animals", grp:"Существительные", en:"a bear", ru:"медведь"},
+  {cat:"Wild animals", grp:"Существительные", en:"a hare", ru:"заяц"},
+  {cat:"Wild animals", grp:"Существительные", en:"a crocodile", ru:"крокодил"},
+  {cat:"Wild animals", grp:"Существительные", en:"a camel", ru:"верблюд"},
+  {cat:"Wild animals", grp:"Существительные", en:"a squirrel", ru:"белка"},
+  {cat:"Wild animals", grp:"Существительные", en:"a hedgehog", ru:"ёж"},
+  {cat:"Wild animals", grp:"Существительные", en:"a mouse", ru:"мышь"},
+  {cat:"Wild animals", grp:"Существительные", en:"a rat", ru:"крыса"},
+  {cat:"Wild animals", grp:"Существительные", en:"a fish", ru:"рыба"},
+  {cat:"Wild animals", grp:"Существительные", en:"a frog", ru:"лягушка"},
+  {cat:"Wild animals", grp:"Существительные", en:"a bird", ru:"птица"},
+  {cat:"Wild animals", grp:"Существительные", en:"a bat", ru:"летучая мышь"},
+  {cat:"Wild animals", grp:"Существительные", en:"a fly", ru:"муха"},
+  {cat:"Wild animals", grp:"Существительные", en:"a beetle", ru:"жук"},
+  {cat:"Fruits", grp:"Существительные", en:"an apple", ru:"яблоко"},
+  {cat:"Fruits", grp:"Существительные", en:"a pear", ru:"груша"},
+  {cat:"Fruits", grp:"Существительные", en:"an apricot", ru:"абрикос"},
+  {cat:"Fruits", grp:"Существительные", en:"a cherry", ru:"вишня"},
+  {cat:"Fruits", grp:"Существительные", en:"a plum", ru:"слива"},
+  {cat:"Fruits", grp:"Существительные", en:"a lemon", ru:"лимон"},
+  {cat:"Fruits", grp:"Существительные", en:"a water-melon", ru:"арбуз"},
+  {cat:"Fruits", grp:"Существительные", en:"a peach", ru:"персик"},
+  {cat:"Fruits", grp:"Существительные", en:"a banana", ru:"банан"},
+  {cat:"Fruits", grp:"Существительные", en:"grapes", ru:"виноград"},
+  {cat:"Fruits", grp:"Существительные", en:"a pineapple", ru:"ананас"},
+  {cat:"Fruits", grp:"Существительные", en:"a grapefruit", ru:"грейпфрут"},
+  {cat:"Fruits", grp:"Существительные", en:"a strawberry", ru:"клубника"},
+  {cat:"Fruits", grp:"Существительные", en:"a raspberry", ru:"малина"},
+  {cat:"Fruits", grp:"Существительные", en:"a fig", ru:"инжир"},
+  {cat:"Fruits", grp:"Существительные", en:"a melon", ru:"дыня"},
+  {cat:"Vegetables", grp:"Существительные", en:"a cucumber", ru:"огурец"},
+  {cat:"Vegetables", grp:"Существительные", en:"a tomato", ru:"помидор"},
+  {cat:"Vegetables", grp:"Существительные", en:"a radish", ru:"редиска"},
+  {cat:"Vegetables", grp:"Существительные", en:"a carrot", ru:"морковь"},
+  {cat:"Vegetables", grp:"Существительные", en:"a potato", ru:"картошка"},
+  {cat:"Vegetables", grp:"Существительные", en:"a beet", ru:"свёкла"},
+  {cat:"Vegetables", grp:"Существительные", en:"a cabbage", ru:"капуста"},
+  {cat:"Vegetables", grp:"Существительные", en:"an onion", ru:"лук"},
+  {cat:"Vegetables", grp:"Существительные", en:"garlic", ru:"чеснок"},
+  {cat:"Vegetables", grp:"Существительные", en:"a pumpkin", ru:"тыква"},
+  {cat:"Vegetables", grp:"Существительные", en:"a pea", ru:"горох"},
+  {cat:"Vegetables", grp:"Существительные", en:"an eggplant", ru:"баклажан"},
+  {cat:"Vegetables", grp:"Существительные", en:"maize", ru:"кукуруза"},
+  {cat:"Vegetables", grp:"Существительные", en:"lettuce", ru:"салат"},
+  {cat:"Professions", grp:"Существительные", en:"a teacher", ru:"учитель"},
+  {cat:"Professions", grp:"Существительные", en:"a pilot", ru:"пилот"},
+  {cat:"Professions", grp:"Существительные", en:"a cook", ru:"повар"},
+  {cat:"Professions", grp:"Существительные", en:"a builder", ru:"строитель"},
+  {cat:"Professions", grp:"Существительные", en:"a doctor", ru:"доктор / врач"},
+  {cat:"Professions", grp:"Существительные", en:"a policeman", ru:"полицейский"},
+  {cat:"Professions", grp:"Существительные", en:"a vet", ru:"ветеринар"},
+  {cat:"Professions", grp:"Существительные", en:"a painter", ru:"художник"},
+  {cat:"Professions", grp:"Существительные", en:"a singer", ru:"певец"},
+  {cat:"Professions", grp:"Существительные", en:"a hairdresser", ru:"парикмахер"},
+  {cat:"Professions", grp:"Существительные", en:"a seller", ru:"продавец"},
+  {cat:"Professions", grp:"Существительные", en:"a secretary", ru:"секретарь"},
+  {cat:"My room", grp:"Существительные", en:"a house", ru:"дом"},
+  {cat:"My room", grp:"Существительные", en:"a table", ru:"стол"},
+  {cat:"My room", grp:"Существительные", en:"a bed", ru:"кровать"},
+  {cat:"My room", grp:"Существительные", en:"a sofa", ru:"диван"},
+  {cat:"My room", grp:"Существительные", en:"a chair", ru:"стул"},
+  {cat:"My room", grp:"Существительные", en:"a vase", ru:"ваза"},
+  {cat:"My room", grp:"Существительные", en:"a flower", ru:"цветок"},
+  {cat:"My room", grp:"Существительные", en:"a clock", ru:"часы"},
+  {cat:"My room", grp:"Существительные", en:"a lamp", ru:"лампа"},
+  {cat:"My room", grp:"Существительные", en:"a door", ru:"дверь"},
+  {cat:"My room", grp:"Существительные", en:"a ceiling", ru:"потолок"},
+  {cat:"My room", grp:"Существительные", en:"a window", ru:"окно"},
+  {cat:"My room", grp:"Существительные", en:"a TV-set", ru:"телевизор"},
+  {cat:"My room", grp:"Существительные", en:"a carpet", ru:"ковёр"},
+  {cat:"Parts of body", grp:"Существительные", en:"a nose", ru:"нос"},
+  {cat:"Parts of body", grp:"Существительные", en:"a finger", ru:"палец"},
+  {cat:"Parts of body", grp:"Существительные", en:"an ear", ru:"ухо"},
+  {cat:"Parts of body", grp:"Существительные", en:"a foot", ru:"ступня"},
+  {cat:"Parts of body", grp:"Существительные", en:"feet", ru:"ступни"},
+  {cat:"Parts of body", grp:"Существительные", en:"a toe", ru:"палец на ноге"},
+  {cat:"Parts of body", grp:"Существительные", en:"a leg", ru:"нога"},
+  {cat:"Parts of body", grp:"Существительные", en:"a right hand", ru:"правая рука"},
+  {cat:"Parts of body", grp:"Существительные", en:"a left hand", ru:"левая рука"},
+  {cat:"Parts of body", grp:"Существительные", en:"a head", ru:"голова"},
+  {cat:"Parts of body", grp:"Существительные", en:"a face", ru:"лицо"},
+  {cat:"Parts of body", grp:"Существительные", en:"an eye", ru:"глаз"},
+  {cat:"Parts of body", grp:"Существительные", en:"a shoulder", ru:"плечо"},
+  {cat:"Parts of body", grp:"Существительные", en:"a knee", ru:"колено"},
+  {cat:"Parts of body", grp:"Существительные", en:"an elbow", ru:"локоть"},
+  {cat:"Parts of body", grp:"Существительные", en:"a tummy", ru:"животик"},
+  {cat:"Clothes", grp:"Существительные", en:"trousers", ru:"брюки"},
+  {cat:"Clothes", grp:"Существительные", en:"a T-shirt", ru:"футболка"},
+  {cat:"Clothes", grp:"Существительные", en:"a sweater", ru:"свитер"},
+  {cat:"Clothes", grp:"Существительные", en:"a dress", ru:"платье"},
+  {cat:"Clothes", grp:"Существительные", en:"a skirt", ru:"юбка"},
+  {cat:"Clothes", grp:"Существительные", en:"a shirt", ru:"рубашка"},
+  {cat:"Clothes", grp:"Существительные", en:"a jacket", ru:"куртка"},
+  {cat:"Clothes", grp:"Существительные", en:"slippers", ru:"тапочки"},
+  {cat:"Clothes", grp:"Существительные", en:"shoes", ru:"туфли"},
+  {cat:"Clothes", grp:"Существительные", en:"a cap", ru:"кепка"},
+  {cat:"School things", grp:"Существительные", en:"a pencil", ru:"карандаш"},
+  {cat:"School things", grp:"Существительные", en:"a pen", ru:"ручка"},
+  {cat:"School things", grp:"Существительные", en:"a book", ru:"книга"},
+  {cat:"School things", grp:"Существительные", en:"a copy-book", ru:"тетрадь"},
+  {cat:"School things", grp:"Существительные", en:"a ruler", ru:"линейка"},
+  {cat:"School things", grp:"Существительные", en:"a rubber", ru:"резинка / ластик"},
+  {cat:"School things", grp:"Существительные", en:"a pencil case", ru:"пенал"},
+  {cat:"Toys", grp:"Существительные", en:"a jumping-rope", ru:"скакалка"},
+  {cat:"Toys", grp:"Существительные", en:"a carriage", ru:"коляска"},
+  {cat:"Toys", grp:"Существительные", en:"a bucket with a shovel", ru:"ведёрко с лопаткой"},
+  {cat:"Toys", grp:"Существительные", en:"a drum", ru:"барабан"},
+  {cat:"Toys", grp:"Существительные", en:"a kite", ru:"воздушный змей"},
+  {cat:"Toys", grp:"Существительные", en:"blocks", ru:"кубики"},
+  {cat:"Toys", grp:"Существительные", en:"a doll", ru:"кукла"},
+  {cat:"Toys", grp:"Существительные", en:"a ball", ru:"мяч"},
+  {cat:"Toys", grp:"Существительные", en:"a top", ru:"юла"},
+  {cat:"Transport", grp:"Существительные", en:"a car", ru:"машина"},
+  {cat:"Transport", grp:"Существительные", en:"a bus", ru:"автобус"},
+  {cat:"Transport", grp:"Существительные", en:"a tram", ru:"трамвай"},
+  {cat:"Transport", grp:"Существительные", en:"a trolley-bus", ru:"троллейбус"},
+  {cat:"Transport", grp:"Существительные", en:"a boat", ru:"лодка"},
+  {cat:"Transport", grp:"Существительные", en:"a ship", ru:"корабль"},
+  {cat:"Transport", grp:"Существительные", en:"a train", ru:"поезд"},
+  {cat:"Transport", grp:"Существительные", en:"a motorcycle", ru:"мотоцикл"},
+  {cat:"Transport", grp:"Существительные", en:"a bicycle", ru:"велосипед"},
+  {cat:"Transport", grp:"Существительные", en:"a helicopter", ru:"вертолёт"},
+  {cat:"Transport", grp:"Существительные", en:"a plane", ru:"самолёт"},
+  {cat:"Dishes", grp:"Существительные", en:"a cup", ru:"чашка"},
+  {cat:"Dishes", grp:"Существительные", en:"a saucepan", ru:"кастрюля"},
+  {cat:"Dishes", grp:"Существительные", en:"a fork", ru:"вилка"},
+  {cat:"Dishes", grp:"Существительные", en:"a spoon", ru:"ложка"},
+  {cat:"Dishes", grp:"Существительные", en:"a knife", ru:"нож"},
+  {cat:"Dishes", grp:"Существительные", en:"a glass", ru:"стакан"},
+  {cat:"Dishes", grp:"Существительные", en:"a frying-pan", ru:"сковородка"},
+  {cat:"Dishes", grp:"Существительные", en:"a plate", ru:"тарелка"},
+  {cat:"Kitchen", grp:"Существительные", en:"a kettle", ru:"чайник"},
+  {cat:"Kitchen", grp:"Существительные", en:"a teapot", ru:"заварник / чайник"},
+  {cat:"Kitchen", grp:"Существительные", en:"a stool", ru:"табурет"},
+  {cat:"Kitchen", grp:"Существительные", en:"a cupboard", ru:"шкаф"},
+  {cat:"Kitchen", grp:"Существительные", en:"a fridge", ru:"холодильник"},
+  {cat:"Kitchen", grp:"Существительные", en:"a sink", ru:"раковина"},
+  {cat:"Kitchen", grp:"Существительные", en:"a cooker", ru:"плита"},
+  {cat:"Kitchen", grp:"Существительные", en:"a kitchen table", ru:"кухонный стол"},
+  {cat:"Kitchen", grp:"Существительные", en:"a broom", ru:"метла"},
+  {cat:"Kitchen", grp:"Существительные", en:"a bin", ru:"мусорное ведро"},
+  {cat:"Kitchen", grp:"Существительные", en:"a bucket", ru:"ведро"},
+  {cat:"Kitchen", grp:"Существительные", en:"breakfast", ru:"завтрак"},
+  {cat:"Kitchen", grp:"Существительные", en:"lunch", ru:"обед"},
+  {cat:"Kitchen", grp:"Существительные", en:"dinner", ru:"ужин"},
+  {cat:"Food", grp:"Существительные", en:"a cake", ru:"торт"},
+  {cat:"Food", grp:"Существительные", en:"an ice-cream", ru:"мороженое"},
+  {cat:"Food", grp:"Существительные", en:"a candy", ru:"конфета"},
+  {cat:"Food", grp:"Существительные", en:"an egg", ru:"яйцо"},
+  {cat:"Food", grp:"Существительные", en:"bread", ru:"хлеб"},
+  {cat:"Food", grp:"Существительные", en:"cheese", ru:"сыр"},
+  {cat:"Food", grp:"Существительные", en:"chicken", ru:"курица"},
+  {cat:"Food", grp:"Существительные", en:"chocolate", ru:"шоколад"},
+  {cat:"Food", grp:"Существительные", en:"salad", ru:"салат"},
+  {cat:"Food", grp:"Существительные", en:"soup", ru:"суп"},
+  {cat:"Food", grp:"Существительные", en:"jelly", ru:"желе"},
+  {cat:"Food", grp:"Существительные", en:"nuts", ru:"орехи"},
+  {cat:"Drinks", grp:"Существительные", en:"tea", ru:"чай"},
+  {cat:"Drinks", grp:"Существительные", en:"coffee", ru:"кофе"},
+  {cat:"Drinks", grp:"Существительные", en:"cocoa", ru:"какао"},
+  {cat:"Drinks", grp:"Существительные", en:"milk", ru:"молоко"},
+  {cat:"Drinks", grp:"Существительные", en:"lemonade", ru:"лимонад"},
+  {cat:"Drinks", grp:"Существительные", en:"water", ru:"вода"},
+  {cat:"Drinks", grp:"Существительные", en:"juice", ru:"сок"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"tennis", ru:"теннис"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"football", ru:"футбол"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"basketball", ru:"баскетбол"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"volleyball", ru:"волейбол"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"badminton", ru:"бадминтон"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"running", ru:"бег"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"swimming", ru:"плавание"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"riding a bike", ru:"катание на велосипеде"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"riding a horse", ru:"катание на лошади"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"chess", ru:"шахматы"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"hockey", ru:"хоккей"},
+  {cat:"Hobby", grp:"Существительные", en:"dancing", ru:"танцы"},
+  {cat:"Hobby", grp:"Существительные", en:"singing", ru:"пение"},
+  {cat:"Hobby", grp:"Существительные", en:"playing the piano", ru:"игра на пианино"},
+  {cat:"Hobby", grp:"Существительные", en:"playing chess", ru:"игра в шахматы"},
+  {cat:"Hobby", grp:"Существительные", en:"playing football", ru:"игра в футбол"},
+  {cat:"Hobby", grp:"Существительные", en:"playing basketball", ru:"игра в баскетбол"},
+  {cat:"Hobby", grp:"Существительные", en:"collecting stamps", ru:"коллекционирование марок"},
+  {cat:"Hobby", grp:"Существительные", en:"collecting stickers", ru:"коллекционирование наклеек"},
+  {cat:"Hobby", grp:"Существительные", en:"painting", ru:"рисование"},
+  {cat:"Hobby", grp:"Существительные", en:"playing the computer", ru:"игра на компьютере"},
+  {cat:"Commands", grp:"Глаголы", en:"Go!", ru:"Иди!"},
+  {cat:"Commands", grp:"Глаголы", en:"Run!", ru:"Беги!"},
+  {cat:"Commands", grp:"Глаголы", en:"Jump!", ru:"Прыгай!"},
+  {cat:"Commands", grp:"Глаголы", en:"Swim!", ru:"Плыви!"},
+  {cat:"Commands", grp:"Глаголы", en:"Fly!", ru:"Лети!"},
+  {cat:"Commands", grp:"Глаголы", en:"Sit!", ru:"Сядь!"},
+  {cat:"Commands", grp:"Глаголы", en:"Stand!", ru:"Встань!"},
+  {cat:"Commands", grp:"Глаголы", en:"Look!", ru:"Посмотри!"},
+  {cat:"Commands", grp:"Глаголы", en:"Say!", ru:"Скажи!"},
+  {cat:"Commands", grp:"Глаголы", en:"Smile!", ru:"Улыбнись!"},
+  {cat:"Commands", grp:"Глаголы", en:"Play!", ru:"Играй!"},
+  {cat:"Commands", grp:"Глаголы", en:"Catch!", ru:"Лови!"},
+  {cat:"Commands", grp:"Глаголы", en:"Draw!", ru:"Нарисуй!"},
+  {cat:"Commands", grp:"Глаголы", en:"Eat!", ru:"Кушай!"},
+  {cat:"Commands", grp:"Глаголы", en:"Wash!", ru:"Умойся!"},
+  {cat:"Commands", grp:"Глаголы", en:"Sleep!", ru:"Спи!"},
+  {cat:"Природа", grp:"Существительные", en:"river", ru:"река"},
+  {cat:"Природа", grp:"Существительные", en:"ocean", ru:"океан"},
+  {cat:"Природа", grp:"Существительные", en:"sky", ru:"небо"},
+  {cat:"Природа", grp:"Существительные", en:"sea", ru:"море"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"favourite", ru:"любимый"},
+  {cat:"Природа", grp:"Существительные", en:"leaves", ru:"листья"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"appear", ru:"появляться"},
+  {cat:"Полезные слова", grp:"Другое", en:"here", ru:"здесь / тут"},
+  {cat:"Hobby", grp:"Существительные", en:"jigsaw", ru:"пазл / головоломка"},
+  {cat:"Clothes", grp:"Существительные", en:"necklace", ru:"ожерелье"},
+  {cat:"My room", grp:"Существительные", en:"candle", ru:"свеча"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"friend", ru:"друг"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"thirsty", ru:"жаждущий"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"tired", ru:"уставший"},
+  {cat:"Hobby", grp:"Существительные", en:"card", ru:"открытка"},
+  {cat:"Hobby", grp:"Существительные", en:"glue", ru:"клей"},
+  {cat:"Hobby", grp:"Существительные", en:"sticky tape", ru:"скотч"},
+  {cat:"Hobby", grp:"Существительные", en:"string", ru:"нитка"},
+  {cat:"My room", grp:"Существительные", en:"window", ru:"окно"},
+  {cat:"My room", grp:"Существительные", en:"wardrobe", ru:"шкаф"},
+  {cat:"Professions", grp:"Существительные", en:"waiter", ru:"официант"},
+  {cat:"Professions", grp:"Существительные", en:"farmer", ru:"фермер"},
+  {cat:"Professions", grp:"Существительные", en:"scientist", ru:"учёный"},
+  {cat:"Professions", grp:"Существительные", en:"zookeeper", ru:"смотритель зоопарка"},
+  {cat:"Город и места", grp:"Существительные", en:"village", ru:"деревня"},
+  {cat:"Город и места", grp:"Существительные", en:"inhabitant", ru:"житель"},
+  {cat:"Город и места", grp:"Существительные", en:"castle", ru:"замок"},
+  {cat:"Город и места", grp:"Существительные", en:"shop", ru:"магазин"},
+  {cat:"Город и места", grp:"Существительные", en:"swimming pool", ru:"бассейн"},
+  {cat:"Город и места", grp:"Существительные", en:"library", ru:"библиотека"},
+  {cat:"Город и места", grp:"Существительные", en:"restaurant", ru:"ресторан"},
+  {cat:"Внешность", grp:"Существительные", en:"good teeth", ru:"хорошие зубы"},
+  {cat:"Внешность", grp:"Существительные", en:"shiny hair", ru:"блестящие волосы"},
+  {cat:"Внешность", grp:"Существительные", en:"strong bones", ru:"крепкие кости"},
+  {cat:"Город и места", grp:"Существительные", en:"skating rink", ru:"каток"},
+  {cat:"Город и места", grp:"Существительные", en:"football pitch", ru:"футбольное поле"},
+  {cat:"Transport", grp:"Существительные", en:"sleigh", ru:"сани"},
+  {cat:"My room", grp:"Существительные", en:"chimney", ru:"труба / дымоход"},
+  {cat:"Wild animals", grp:"Существительные", en:"reindeer", ru:"северный олень"},
+  {cat:"Hobby", grp:"Существительные", en:"tinsel", ru:"мишура"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"listen", ru:"слушать"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"read", ru:"читать"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"write", ru:"писать"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"travel", ru:"путешествовать"},
+  {cat:"Время и праздники", grp:"Другое", en:"today", ru:"сегодня"},
+  {cat:"Время и праздники", grp:"Другое", en:"tomorrow", ru:"завтра"},
+  {cat:"Время и праздники", grp:"Другое", en:"yesterday", ru:"вчера"},
+  {cat:"Kitchen", grp:"Существительные", en:"freezers", ru:"морозилки"},
+  {cat:"Food", grp:"Существительные", en:"dairy", ru:"молочные продукты"},
+  {cat:"Внешность", grp:"Существительные", en:"curly hair", ru:"кудрявые волосы"},
+  {cat:"Внешность", grp:"Существительные", en:"straight hair", ru:"прямые волосы"},
+  {cat:"Внешность", grp:"Существительные", en:"dark hair", ru:"тёмные волосы"},
+  {cat:"Внешность", grp:"Существительные", en:"long hair", ru:"длинные волосы"},
+  {cat:"Внешность", grp:"Существительные", en:"blond hair", ru:"светлые волосы"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"meet", ru:"встречать / встречаться"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"welcome", ru:"добро пожаловать"},
+  {cat:"Clothes", grp:"Существительные", en:"clothes", ru:"одежда"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"come", ru:"приходить"},
+  {cat:"School things", grp:"Существительные", en:"notebook", ru:"тетрадь"},
+  {cat:"School things", grp:"Существительные", en:"map", ru:"карта"},
+  {cat:"School things", grp:"Существительные", en:"backpack", ru:"рюкзак"},
+  {cat:"My room", grp:"Существительные", en:"mobile phone", ru:"мобильный телефон"},
+  {cat:"Природа", grp:"Существительные", en:"roses", ru:"розы"},
+  {cat:"Погода", grp:"Существительные", en:"rainbow", ru:"радуга"},
+  {cat:"Wild animals", grp:"Существительные", en:"butterflies", ru:"бабочки"},
+  {cat:"Природа", grp:"Существительные", en:"north", ru:"север"},
+  {cat:"Природа", grp:"Существительные", en:"east", ru:"восток"},
+  {cat:"Природа", grp:"Существительные", en:"south", ru:"юг"},
+  {cat:"Природа", grp:"Существительные", en:"west", ru:"запад"},
+  {cat:"Numbers", grp:"Другое", en:"minus", ru:"минус"},
+  {cat:"Numbers", grp:"Другое", en:"plus", ru:"плюс"},
+  {cat:"Numbers", grp:"Другое", en:"equals", ru:"равно / равняется"},
+  {cat:"Внешность", grp:"Существительные", en:"a small nose", ru:"маленький нос"},
+  {cat:"Внешность", grp:"Существительные", en:"small glasses", ru:"маленькие очки"},
+  {cat:"Внешность", grp:"Существительные", en:"a black moustache", ru:"чёрные усы"},
+  {cat:"Внешность", grp:"Существительные", en:"red hair", ru:"рыжие волосы"},
+  {cat:"Hobby", grp:"Существительные", en:"decorations", ru:"украшения"},
+  {cat:"Clothes", grp:"Существительные", en:"bracelet", ru:"браслет"},
+  {cat:"Hobby", grp:"Существительные", en:"mask", ru:"маска"},
+  {cat:"Hobby", grp:"Существительные", en:"puppet", ru:"кукла"},
+  {cat:"Hobby", grp:"Существительные", en:"badge", ru:"значок"},
+  {cat:"Hobby", grp:"Существительные", en:"scissors", ru:"ножницы"},
+  {cat:"Hobby", grp:"Существительные", en:"paints", ru:"краски"},
+  {cat:"Hobby", grp:"Существительные", en:"paintbrush", ru:"кисточка"},
+  {cat:"Hobby", grp:"Существительные", en:"crayons", ru:"мелки"},
+  {cat:"Hobby", grp:"Существительные", en:"colouring pens", ru:"цветные карандаши / фломастеры"},
+  {cat:"Hobby", grp:"Существительные", en:"magnifying glass", ru:"лупа"},
+  {cat:"Hobby", grp:"Существительные", en:"guide book", ru:"путеводитель"},
+  {cat:"Hobby", grp:"Существительные", en:"crafts", ru:"поделки / ремёсла"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"cheap", ru:"дешёвый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"easy", ru:"лёгкий"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"boring", ru:"скучный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"old-fashioned", ru:"старомодный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"expensive", ru:"дорогой"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"difficult", ru:"сложный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"exciting", ru:"захватывающий"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"modern", ru:"современный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"blind", ru:"слепой"},
+  {cat:"Wild animals", grp:"Существительные", en:"ostrich", ru:"страус"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"fell asleep", ru:"заснул"},
+  {cat:"Полезные слова", grp:"Другое", en:"enough", ru:"достаточно"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"invite", ru:"приглашать"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"young", ru:"молодой"},
+  {cat:"Город и места", grp:"Существительные", en:"building", ru:"здание"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"luxury", ru:"роскошь"},
+  {cat:"Природа", grp:"Существительные", en:"island", ru:"остров"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"go across", ru:"пересечь / пройти через"},
+  {cat:"Город и места", grp:"Существительные", en:"bridge", ru:"мост"},
+  {cat:"School things", grp:"Существительные", en:"shape", ru:"форма"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"sail", ru:"плыть / парус"},
+  {cat:"Город и места", grp:"Существительные", en:"floors", ru:"этажи"},
+  {cat:"Полезные слова", grp:"Другое", en:"luckily", ru:"к счастью"},
+  {cat:"Город и места", grp:"Существительные", en:"basement", ru:"подвал"},
+  {cat:"Город и места", grp:"Существительные", en:"roof", ru:"крыша"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"sharp", ru:"острый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"cute", ru:"милый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"scary", ru:"страшный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"spotty", ru:"пятнистый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"stripy", ru:"полосатый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"different", ru:"разный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"special", ru:"особенный"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"create", ru:"создавать"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"celebrate", ru:"праздновать"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"cartoon", ru:"мультфильм"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"describe", ru:"описывать"},
+  {cat:"School things", grp:"Существительные", en:"question", ru:"вопрос"},
+  {cat:"School things", grp:"Существительные", en:"answer", ru:"ответ"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"unremarkable", ru:"непримечательный"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"work", ru:"работать"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"marry", ru:"жениться / выходить замуж"},
+  {cat:"Природа", grp:"Существительные", en:"wood", ru:"лес / древесина"},
+  {cat:"Город и места", grp:"Существительные", en:"street", ru:"улица"},
+  {cat:"Город и места", grp:"Существительные", en:"flats", ru:"квартиры"},
+  {cat:"Город и места", grp:"Существительные", en:"shopping centre", ru:"торговый центр"},
+  {cat:"Domestic animals", grp:"Существительные", en:"cattle", ru:"скот"},
+  {cat:"Город и места", grp:"Существительные", en:"motorway", ru:"автомагистраль"},
+  {cat:"Город и места", grp:"Существительные", en:"farm", ru:"ферма"},
+  {cat:"Природа", grp:"Существительные", en:"fields", ru:"поля"},
+  {cat:"Город и места", grp:"Существительные", en:"paths", ru:"дорожки"},
+  {cat:"Город и места", grp:"Существительные", en:"town", ru:"город"},
+  {cat:"Время и праздники", grp:"Существительные", en:"past", ru:"прошлое / прошедший"},
+  {cat:"Город и места", grp:"Существительные", en:"pavements", ru:"тротуары"},
+  {cat:"Город и места", grp:"Существительные", en:"canteen", ru:"столовая"},
+  {cat:"Полезные слова", grp:"Существительные", en:"kinds", ru:"виды"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"means", ru:"означает"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"main", ru:"главный / основной"},
+  {cat:"Food", grp:"Существительные", en:"courses", ru:"блюда / курсы"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"choice", ru:"выбор"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"large", ru:"большой"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"selection", ru:"выбор / подбор"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"dirty", ru:"грязный"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"wait", ru:"ждать"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"pay attention", ru:"обращать внимание"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"disobey", ru:"не слушаться"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"fight", ru:"драться"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"robber", ru:"грабитель"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"want", ru:"хотеть"},
+  {cat:"Полезные слова", grp:"Существительные", en:"middle", ru:"середина"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"first", ru:"первый"},
+  {cat:"Полезные слова", grp:"Другое", en:"then", ru:"потом"},
+  {cat:"Полезные слова", grp:"Другое", en:"through", ru:"через"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"ask questions", ru:"задавать вопросы"},
+  {cat:"Полезные слова", grp:"Другое", en:"after that", ru:"после этого"},
+  {cat:"Полезные слова", grp:"Другое", en:"finally", ru:"наконец"},
+  {cat:"Полезные слова", grp:"Другое", en:"both", ru:"оба"},
+  {cat:"Город и места", grp:"Существительные", en:"centre", ru:"центр"},
+  {cat:"Полезные слова", grp:"Другое", en:"never", ru:"никогда"},
+  {cat:"Полезные слова", grp:"Другое", en:"often", ru:"часто"},
+  {cat:"Полезные слова", grp:"Другое", en:"always", ru:"всегда"},
+  {cat:"Полезные слова", grp:"Другое", en:"sometime", ru:"иногда"},
+  {cat:"Полезные слова", grp:"Другое", en:"usually", ru:"обычно"},
+  {cat:"Hobby", grp:"Существительные", en:"tool", ru:"инструмент"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"dig", ru:"копать"},
+  {cat:"Природа", grp:"Существительные", en:"soil", ru:"земля"},
+  {cat:"Wild animals", grp:"Существительные", en:"pest", ru:"вредитель"},
+  {cat:"Wild animals", grp:"Существительные", en:"mouse", ru:"мышь"},
+  {cat:"Parts of body", grp:"Существительные", en:"mouth", ru:"рот"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"it looks like", ru:"это похоже на"},
+  {cat:"Parts of body", grp:"Существительные", en:"body", ru:"тело"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"look like", ru:"быть похожим"},
+  {cat:"Природа", grp:"Существительные", en:"stick", ru:"палка"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"slide", ru:"кататься / скользить"},
+  {cat:"Wild animals", grp:"Существительные", en:"camouflage", ru:"камуфляж"},
+  {cat:"Wild animals", grp:"Существительные", en:"patterns", ru:"узоры"},
+  {cat:"Wild animals", grp:"Существительные", en:"predator", ru:"хищник"},
+  {cat:"Полезные слова", grp:"Другое", en:"therefore", ru:"следовательно"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"important", ru:"важный"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"full-price", ru:"полная цена"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"discount", ru:"скидка"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"honest", ru:"честный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"lively", ru:"оживлённый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"cheerful", ru:"весёлый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"huge", ru:"огромный"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"explore", ru:"исследовать"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"grow up", ru:"расти / взрослеть"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"change", ru:"менять / изменение"},
+  {cat:"Природа", grp:"Существительные", en:"ice age", ru:"ледниковый период"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"protect", ru:"защищать"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"share", ru:"делиться"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"equipment", ru:"оборудование"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"is", ru:"есть / является"},
+  {cat:"Food", grp:"Существительные", en:"dish", ru:"блюдо"},
+  {cat:"Город и места", grp:"Существительные", en:"supermarket", ru:"супермаркет"},
+  {cat:"Food", grp:"Существительные", en:"cake", ru:"торт / пирог"},
+  {cat:"Время и праздники", grp:"Существительные", en:"quarter", ru:"четверть"},
+  {cat:"Город и места", grp:"Существительные", en:"factory", ru:"фабрика"},
+  {cat:"Город и места", grp:"Существительные", en:"garden", ru:"сад"},
+  {cat:"My room", grp:"Существительные", en:"bookcase", ru:"книжный шкаф"},
+  {cat:"My room", grp:"Существительные", en:"laptop", ru:"ноутбук"},
+  {cat:"Внешность", grp:"Существительные", en:"glasses", ru:"очки"},
+  {cat:"Kitchen", grp:"Существительные", en:"water bottle", ru:"бутылка воды"},
+  {cat:"Food", grp:"Существительные", en:"crisps", ru:"чипсы"},
+  {cat:"Food", grp:"Существительные", en:"biscuits", ru:"печенье"},
+  {cat:"Погода", grp:"Существительные", en:"snowing", ru:"идёт снег"},
+  {cat:"Погода", grp:"Существительные", en:"cloud", ru:"облако"},
+  {cat:"Погода", grp:"Существительные", en:"wind", ru:"ветер"},
+  {cat:"Погода", grp:"Существительные", en:"sun", ru:"солнце"},
+  {cat:"Погода", grp:"Существительные", en:"rain", ru:"дождь"},
+  {cat:"Погода", grp:"Существительные", en:"fog", ru:"туман"},
+  {cat:"Природа", grp:"Существительные", en:"grass", ru:"трава"},
+  {cat:"Food", grp:"Существительные", en:"flavour", ru:"вкус / аромат"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"famous", ru:"знаменитый"},
+  {cat:"Полезные слова", grp:"Другое", en:"all", ru:"все"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"find out", ru:"узнать / выяснить"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"invent", ru:"изобретать"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"arrive", ru:"прибывать"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"queue", ru:"очередь"},
+  {cat:"Природа", grp:"Существительные", en:"acorn", ru:"жёлудь"},
+  {cat:"Полезные слова", grp:"Существительные", en:"bottom", ru:"дно / низ"},
+  {cat:"Природа", grp:"Существительные", en:"nest", ru:"гнездо"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"cozy", ru:"уютный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"amazing", ru:"удивительный"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"dream", ru:"мечта"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"fancy", ru:"причудливый / необычный"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"follow", ru:"следовать"},
+  {cat:"Город и места", grp:"Существительные", en:"trip", ru:"поездка / экскурсия"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"old", ru:"старый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"wise", ru:"мудрый"},
+  {cat:"Wild animals", grp:"Существительные", en:"tail", ru:"хвост"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"happy", ru:"счастливый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"wicked", ru:"злой / плохой"},
+  {cat:"Kitchen", grp:"Существительные", en:"bottle", ru:"бутылка"},
+  {cat:"Wild animals", grp:"Существительные", en:"otter", ru:"выдра"},
+  {cat:"Природа", grp:"Существительные", en:"shell", ru:"ракушка"},
+  {cat:"Food", grp:"Существительные", en:"scallops", ru:"морские гребешки"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"basket", ru:"корзина"},
+  {cat:"Описания (какой?)", grp:"Существительные", en:"adventurous", ru:"любящий приключения"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"adults", ru:"взрослые"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"have a snack", ru:"перекусить"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"choose", ru:"выбирать"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"author", ru:"автор"},
+  {cat:"Transport", grp:"Существительные", en:"van", ru:"фургон"},
+  {cat:"Полезные слова", grp:"Другое", en:"near", ru:"около / рядом"},
+  {cat:"Food", grp:"Существительные", en:"smell", ru:"запах"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"noisy", ru:"шумный"},
+  {cat:"Clothes", grp:"Существительные", en:"belt", ru:"ремень"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"fluffy", ru:"пушистый"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"contest", ru:"соревнование"},
+  {cat:"Время и праздники", grp:"Существительные", en:"break", ru:"перерыв"},
+  {cat:"Clothes", grp:"Существительные", en:"helmet", ru:"шлем"},
+  {cat:"Wild animals", grp:"Существительные", en:"snail", ru:"улитка"},
+  {cat:"Полезные слова", grp:"Другое", en:"carefully", ru:"аккуратно"},
+  {cat:"Полезные слова", grp:"Другое", en:"perfectly", ru:"идеально"},
+  {cat:"Полезные слова", grp:"Другое", en:"speedily", ru:"быстро"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"team", ru:"команда"},
+  {cat:"Wild animals", grp:"Существительные", en:"wings", ru:"крылья"},
+  {cat:"Clothes", grp:"Существительные", en:"jeans", ru:"джинсы"},
+  {cat:"Clothes", grp:"Существительные", en:"scarf", ru:"шарф"},
+  {cat:"Clothes", grp:"Существительные", en:"gloves", ru:"перчатки"},
+  {cat:"Clothes", grp:"Существительные", en:"boots", ru:"ботинки"},
+  {cat:"Clothes", grp:"Существительные", en:"sandals", ru:"сандалии"},
+  {cat:"Hobby", grp:"Существительные", en:"tempo", ru:"темп"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"volume", ru:"громкость"},
+  {cat:"Природа", grp:"Существительные", en:"earth", ru:"земля"},
+  {cat:"Полезные слова", grp:"Другое", en:"nearly", ru:"почти"},
+  {cat:"Полезные слова", grp:"Другое", en:"on", ru:"на"},
+  {cat:"Полезные слова", grp:"Существительные", en:"target", ru:"цель"},
+  {cat:"Полезные слова", grp:"Другое", en:"before", ru:"перед / до"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"I hope", ru:"я надеюсь"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"awards", ru:"награды"},
+  {cat:"Полезные слова", grp:"Другое", en:"What about you?", ru:"А как насчёт тебя?"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"vote", ru:"голосовать"},
+  {cat:"Kinds of sport", grp:"Существительные", en:"referee", ru:"судья"},
+  {cat:"Время и праздники", grp:"Существительные", en:"holiday", ru:"праздник"},
+  {cat:"Время и праздники", grp:"Существительные", en:"holidays", ru:"каникулы"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"nearest", ru:"ближайший"},
+  {cat:"Полезные слова", grp:"Другое", en:"for example", ru:"например"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"do arts and crafts", ru:"делать поделки"},
+  {cat:"Погода", grp:"Существительные", en:"thunderstorm", ru:"гроза"},
+  {cat:"Полезные слова", grp:"Другое", en:"during", ru:"во время"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"awful", ru:"ужасный / отвратительный"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"stay", ru:"оставаться"},
+  {cat:"Природа", grp:"Существительные", en:"tent", ru:"палатка"},
+  {cat:"Погода", grp:"Существительные", en:"lightning", ru:"молния"},
+  {cat:"School things", grp:"Существительные", en:"books", ru:"книги"},
+  {cat:"Food", grp:"Существительные", en:"rice", ru:"рис"},
+  {cat:"Transport", grp:"Существительные", en:"cabin", ru:"кабина / каюта"},
+  {cat:"School things", grp:"Существительные", en:"paper", ru:"бумага"},
+  {cat:"Fruits", grp:"Существительные", en:"pear", ru:"груша"},
+  {cat:"My room", grp:"Существительные", en:"television", ru:"телевизор"},
+  {cat:"Transport", grp:"Существительные", en:"car", ru:"машина"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"man", ru:"мужчина"},
+  {cat:"My room", grp:"Существительные", en:"mat", ru:"коврик"},
+  {cat:"Kitchen", grp:"Существительные", en:"jar", ru:"банка"},
+  {cat:"Kitchen", grp:"Существительные", en:"jug", ru:"кувшин"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"coin", ru:"монета"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"tag", ru:"бирка"},
+  {cat:"Kitchen", grp:"Существительные", en:"can", ru:"банка / мочь"},
+  {cat:"Полезные слова", grp:"Другое", en:"about", ru:"о / про"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"absent", ru:"отсутствующий"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"recording", ru:"запись / видеозапись"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"video", ru:"видео"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"fiction", ru:"вымысел / художественная литература"},
+  {cat:"Hobby", grp:"Существительные", en:"activities", ru:"занятия / активности"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"ghost", ru:"привидение"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"stuntperson", ru:"каскадёр"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"actor", ru:"актёр"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"wardrobe assistant", ru:"помощник по костюмам"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"make-up artist", ru:"визажист"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"director", ru:"режиссёр / директор"},
+  {cat:"Кино и ТВ", grp:"Существительные", en:"cameraman", ru:"оператор"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"tell", ru:"сказать / рассказывать"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"cashier", ru:"кассир"},
+  {cat:"Город и места", grp:"Существительные", en:"bakery", ru:"булочная / пекарня"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"customer", ru:"покупатель / клиент"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"shop assistant", ru:"продавец-консультант"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"money", ru:"деньги"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"wallet", ru:"кошелёк"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"credit card", ru:"кредитная карта"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"shopping bag", ru:"сумка для покупок"},
+  {cat:"Покупки и деньги", grp:"Существительные", en:"trolley", ru:"тележка"},
+  {cat:"Полезные слова", grp:"Другое", en:"seldom", ru:"редко"},
+  {cat:"Полезные слова", grp:"Другое", en:"now", ru:"сейчас"},
+  {cat:"Полезные слова", grp:"Другое", en:"sometimes", ru:"иногда"},
+  {cat:"Время и праздники", grp:"Существительные", en:"every Monday", ru:"каждый понедельник"},
+  {cat:"Hobby", grp:"Глаголы", en:"playing the violin", ru:"играть на скрипке"},
+  {cat:"Hobby", grp:"Глаголы", en:"playing the trumpet", ru:"играть на трубе"},
+  {cat:"Hobby", grp:"Глаголы", en:"playing the flute", ru:"играть на флейте"},
+  {cat:"Полезные слова", grp:"Другое", en:"quietly", ru:"тихо"},
+  {cat:"Полезные слова", grp:"Другое", en:"loudly", ru:"громко"},
+  {cat:"Полезные слова", grp:"Другое", en:"quickly", ru:"быстро"},
+  {cat:"Полезные слова", grp:"Другое", en:"slowly", ru:"медленно"},
+  {cat:"Полезные слова", grp:"Другое", en:"terribly", ru:"ужасно"},
+  {cat:"Hobby", grp:"Существительные", en:"parties", ru:"вечеринки"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"tidy up", ru:"убирать / наводить порядок"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"dark", ru:"тёмный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"light", ru:"светлый / лёгкий"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"slow", ru:"медленный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"fast", ru:"быстрый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"heavy", ru:"тяжёлый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"tall", ru:"высокий"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"short", ru:"короткий / низкий"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"long", ru:"длинный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"big", ru:"большой"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"small", ru:"маленький"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"ask", ru:"спрашивать"},
+  {cat:"School things", grp:"Существительные", en:"questions", ru:"вопросы"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"be careful", ru:"будь осторожен"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"deep", ru:"глубокий"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"skip", ru:"пропускать"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"fear", ru:"страх"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"look for", ru:"искать"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"pretty", ru:"красивый / симпатичный"},
+  {cat:"Wild animals", grp:"Существительные", en:"orangutan", ru:"орангутан"},
+  {cat:"Природа", grp:"Существительные", en:"volcano", ru:"вулкан"},
+  {cat:"Природа", grp:"Существительные", en:"lava", ru:"лава"},
+  {cat:"Люди и чувства", grp:"Существительные", en:"giant", ru:"гигант"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"clever", ru:"умный"},
+  {cat:"School things", grp:"Существительные", en:"idea", ru:"идея"},
+  {cat:"Полезные слова", grp:"Другое", en:"together", ru:"вместе"},
+  {cat:"Полезные слова", grp:"Другое", en:"between", ru:"между"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"finish", ru:"закончить / финиш"},
+  {cat:"Полезные слова", grp:"Другое", en:"same", ru:"такой же / одинаковый"},
+  {cat:"Numbers", grp:"Существительные", en:"numbers", ru:"числа"},
+  {cat:"Полезные слова", grp:"Другое", en:"into", ru:"внутрь / в"},
+  {cat:"Полезные слова", grp:"Другое", en:"what", ru:"что"},
+  {cat:"Полезные слова", grp:"Другое", en:"I", ru:"я"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"do", ru:"делать"},
+  {cat:"Domestic animals", grp:"Существительные", en:"cockerels", ru:"петушки"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"peel", ru:"чистить / очищать"},
+  {cat:"Город и места", grp:"Существительные", en:"country", ru:"страна"},
+  {cat:"Hobby", grp:"Существительные", en:"modelling clay", ru:"пластилин"},
+  {cat:"Parts of body", grp:"Существительные", en:"bruise", ru:"синяк"},
+  {cat:"Полезные слова", grp:"Другое", en:"What time is it?", ru:"Который час?"},
+  {cat:"Полезные слова", grp:"Другое", en:"etc.", ru:"и так далее"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"fresh", ru:"свежий"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"raw", ru:"сырой"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"fried", ru:"жареный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"spicy", ru:"острый"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"frozen", ru:"замороженный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"sweet", ru:"сладкий"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"tasty", ru:"вкусный"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"vegetarian", ru:"вегетарианский"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"mean", ru:"значить / иметь в виду"},
+  {cat:"Food", grp:"Существительные", en:"flavor", ru:"вкус / аромат"},
+  {cat:"School things", grp:"Существительные", en:"language", ru:"язык"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"learn", ru:"учить / изучать"},
+  {cat:"Полезные слова", grp:"Другое", en:"not really", ru:"не совсем"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"visit", ru:"посещать"},
+  {cat:"Действия (что делать?)", grp:"Существительные", en:"enjoy", ru:"наслаждаться"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"fly", ru:"летать"},
+  {cat:"Описания (какой?)", grp:"Прилагательные", en:"other", ru:"другой"},
+  {cat:"Полезные слова", grp:"Другое", en:"safely", ru:"безопасно"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"give eyes some rest", ru:"дать глазам отдохнуть"},
+  {cat:"Действия (что делать?)", grp:"Глаголы", en:"sit with back straight", ru:"сидеть с ровной спиной"},
+  {cat:"Полезные слова", grp:"Другое", en:"also", ru:"тоже"},
+  {cat:"Полезные слова", grp:"Другое", en:"which", ru:"который"},
+  {cat:"Город и места", grp:"Существительные", en:"city", ru:"город"},
+  {cat:"Город и места", grp:"Существительные", en:"market", ru:"рынок"},
+  {cat:"Город и места", grp:"Существительные", en:"capital", ru:"столица"},
+];
+/* ═══════════════════ DATEN-BLOCK ENDE ═══════════════════ */
+
+/* ---------- порядок групп по типу слова ---------- */
+const GRP_ORDER = ["Существительные","Глаголы","Прилагательные","Числа","Другое"];
+
+/* ---------- конфетти-частицы ---------- */
+const COLORS=["#2E7D4F","#4CAF82","#A8D5B5","#1B3A6B","#F5C842","#E8645A"];
+function burstParticles(x,y){
+  for(let i=0;i<18;i++){
+    const p=document.createElement("div");
+    p.className="particle";
+    const angle=Math.random()*360, dist=50+Math.random()*80;
+    const tx=Math.cos(angle*Math.PI/180)*dist+"px";
+    const ty=Math.sin(angle*Math.PI/180)*dist-30+"px";
+    p.style.cssText=`left:${x}px;top:${y}px;background:${COLORS[i%COLORS.length]};`+
+      `--tx:${tx};--ty:${ty};animation-delay:${Math.random()*80}ms`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),900);
+  }
+}
+
+/* ---------- озвучивание (Web Speech API) ---------- */
+let VOICES=[];
+function loadVoices(){ try{VOICES=speechSynthesis.getVoices();}catch(e){} }
+if("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+function speak(text){
+  if(!$("optSpeak").checked || !("speechSynthesis" in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="en-US"; u.rate=0.85;
+    const v=VOICES.find(v=>/en[-_]/i.test(v.lang)); if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- статистика по словам (localStorage) ---------- */
+const STATS_KEY="wq_stats_v1";
+function loadStats(){ try{return JSON.parse(localStorage.getItem(STATS_KEY))||{};}catch(e){return {};} }
+function saveStats(){ try{localStorage.setItem(STATS_KEY,JSON.stringify(STATS));}catch(e){} }
+let STATS=loadStats();
+function recordStat(en, ok){
+  const s=STATS[en]||{seen:0,wrong:0};
+  s.seen++; if(!ok) s.wrong++;
+  STATS[en]=s; saveStats();
+}
+function hardScore(w){            // больше = труднее (изучать раньше)
+  const s=STATS[w.en];
+  if(!s||s.seen===0) return 0.45; // новые слова — средний приоритет
+  return s.wrong/s.seen;
+}
+function learnedCount(){
+  return VOCAB.filter(w=>{const s=STATS[w.en];return s&&s.seen>=2&&s.wrong/s.seen<0.34;}).length;
+}
+
+/* ---------- состояние ---------- */
+let mode = "ruen";            // "ruen" = RU→EN, "enru" = EN→RU
+let dim  = "cat";             // "cat" = по темам, "grp" = по типу слова
+let order = [];
+let pos = 0;
+let results = {};             // idx -> "ok" | "fail"
+let attempts = {};
+let answered = {};
+let errorRound = false;
+let firstRoundResults = null;
+let streakCount = 0;
+let selected = new Set();     // выбранные значения текущего измерения
+let countChoice = "all";
+let runStartMs = 0;           // время старта диктанта (для подсчёта длительности)
+
+function fmtTime(ms){
+  const s = Math.max(0, Math.round(ms/1000));
+  const m = Math.floor(s/60), sec = s%60;
+  return m>0 ? m+" мин "+sec+" сек" : sec+" сек";
+}
+
+const PRAISE = ["Отлично, верно!","Точно в цель!","Super! Верно!","Молодец!","Именно так!","Great job!"];
+const $ = id => document.getElementById(id);
+const screens = { start:$("scrStart"), quiz:$("scrQuiz"), res:$("scrResults") };
+function show(name){
+  Object.values(screens).forEach(s=>s.classList.remove("active"));
+  screens[name].classList.add("active");
+}
+
+/* ---------- нормализация и проверка ---------- */
+function norm(s){
+  return s.trim().toLowerCase()
+          .replace(/\s+/g," ")
+          .replace(/ё/g,"е")
+          .replace(/[’`]/g,"'");
+}
+const EN_PREFIX = /^(a|an|the|to)\s+/;
+function coreEn(s){ return norm(s).replace(EN_PREFIX,""); }
+
+function checkAnswer(user, target, isEnglish){
+  const variants = target.split(/[,;\/]/).map(v=>v.trim()).filter(Boolean);
+  if (!isEnglish){
+    return variants.map(norm).includes(norm(user)) ? "ok" : "wrong";
+  }
+  const u = norm(user);
+  for (const v of variants){
+    const t = norm(v);
+    if (u === t) return "ok";
+    const tCore = coreEn(v), uCore = coreEn(user);
+    if (uCore === tCore){
+      const tHasPrefix = EN_PREFIX.test(t), uHasPrefix = EN_PREFIX.test(u);
+      if (tHasPrefix && !uHasPrefix) return "prefix";
+      if (tHasPrefix && uHasPrefix) return "prefix-wrong";
+      if (!tHasPrefix && uHasPrefix) return "prefix-extra";
+    }
+  }
+  return "wrong";
+}
+
+/* ---------- измерение группировки ---------- */
+function dimValues(){
+  if (dim==="grp") return GRP_ORDER.filter(g=>VOCAB.some(w=>w.grp===g));
+  return [...new Set(VOCAB.map(w=>w.cat))];
+}
+
+/* ---------- построение стартового экрана ---------- */
+function buildCats(){
+  const grid = $("catGrid");
+  grid.innerHTML = "";
+  selected = new Set();
+  dimValues().forEach(c=>{
+    const n = VOCAB.filter(w=>w[dim]===c).length;
+    const chip = document.createElement("button");
+    chip.className = "cat-chip selected";
+    chip.innerHTML = c+" <span class='cnt'>"+n+"</span>";
+    chip.onclick = ()=>{
+      chip.classList.toggle("selected");
+      chip.classList.contains("selected") ? selected.add(c) : selected.delete(c);
+      updateSummary();
+    };
+    grid.appendChild(chip);
+    selected.add(c);
+  });
+  updateSummary();
+}
+function setDim(d){
+  dim = d;
+  $("dimCat").classList.toggle("selected", d==="cat");
+  $("dimGrp").classList.toggle("selected", d==="grp");
+  $("catLabel").childNodes[0].nodeValue = (d==="cat" ? "Категории слов " : "Группы слов ");
+  buildCats();
+}
+$("dimCat").onclick = ()=>setDim("cat");
+$("dimGrp").onclick = ()=>setDim("grp");
+
+$("btnAllCats").onclick = ()=>{
+  document.querySelectorAll(".cat-chip").forEach(ch=>ch.classList.add("selected"));
+  dimValues().forEach(c=>selected.add(c));
+  updateSummary();
+};
+$("btnNoneCats").onclick = ()=>{
+  document.querySelectorAll(".cat-chip").forEach(ch=>ch.classList.remove("selected"));
+  selected.clear();
+  updateSummary();
+};
+document.querySelectorAll(".count-btn").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll(".count-btn").forEach(x=>x.classList.remove("selected"));
+    b.classList.add("selected");
+    countChoice = b.dataset.n;
+    $("countCustom").value = "";
+    updateSummary();
+  };
+});
+$("countCustom").addEventListener("input", ()=>{
+  document.querySelectorAll(".count-btn").forEach(x=>x.classList.remove("selected"));
+  countChoice = "custom";
+  updateSummary();
+});
+function poolWords(){
+  return VOCAB.map((w,i)=>({w,i})).filter(o=>selected.has(o.w[dim]));
+}
+function plannedCount(){
+  const pool = poolWords().length;
+  if (countChoice==="all") return pool;
+  if (countChoice==="custom"){
+    const v = parseInt($("countCustom").value);
+    return isNaN(v)||v<1 ? pool : Math.min(v, pool);
+  }
+  return Math.min(parseInt(countChoice), pool);
+}
+function updateSummary(){
+  const pool = poolWords().length;
+  const n = plannedCount();
+  $("btnStart").disabled = pool===0;
+  const word = dim==="cat" ? "тем" : "групп";
+  $("startSummary").textContent = pool===0
+    ? "Выбери хотя бы одну группу."
+    : "Будет "+n+" слов · выбрано "+selected.size+" "+word+".";
+}
+
+$("modeRuEn").onclick = ()=>{ mode="ruen"; $("modeRuEn").classList.add("selected"); $("modeEnRu").classList.remove("selected"); };
+$("modeEnRu").onclick = ()=>{ mode="enru"; $("modeEnRu").classList.add("selected"); $("modeRuEn").classList.remove("selected"); };
+
+$("btnStart").onclick = ()=>{
+  let pool = poolWords().map(o=>o.i);
+  if ($("optShuffle").checked) pool.sort(()=>Math.random()-0.5);
+  if ($("optHard").checked) pool.sort((a,b)=>hardScore(VOCAB[b])-hardScore(VOCAB[a]));
+  runStartMs = Date.now();
+  startRun(pool.slice(0, plannedCount()), false);
+};
+
+function startRun(indices, isErrorRound){
+  order = [...indices];
+  if (isErrorRound && $("optShuffle").checked) order.sort(()=>Math.random()-0.5);
+  pos = 0; streakCount = 0;
+  errorRound = isErrorRound;
+  order.forEach(i=>{ delete results[i]; delete attempts[i]; delete answered[i]; });
+  $("roundBadge").classList.toggle("show", isErrorRound);
+  $("streak").classList.remove("show");
+  show("quiz");
+  renderCard();
+}
+
+/* ---------- карточка ---------- */
+function targetOf(w){ return mode==="ruen" ? w.en : w.ru.split(/[,;\/]/)[0].trim(); }
+
+function renderCard(){
+  const idx = order[pos];
+  const w = VOCAB[idx];
+  const askRu = mode==="ruen";
+  $("catTag").textContent = dim==="grp" ? w.grp : w.cat;
+  $("promptLabel").textContent = askRu ? "Переведи на английский:" : "Переведи на русский:";
+  $("promptWord").textContent  = askRu ? w.ru.split(/[,;\/]/)[0] : w.en;
+  $("progNum").textContent = (pos+1)+" / "+order.length;
+  $("progFill").style.width = (pos/order.length*100)+"%";
+
+  const fb = $("feedback");
+  fb.className = "feedback"; fb.innerHTML = "";
+  const input = $("answerInput");
+  input.value = ""; input.disabled = false;
+  $("answerZone").className = "answer-zone";
+
+  $("btnCheck").style.display = "";
+  $("btnSkipNext").style.display = "none";
+  $("btnDontKnow").disabled = false;
+  $("btnBack").disabled = pos===0;
+
+  // кнопка «послушать»: в EN→RU слово видно сразу, можно слушать; в RU→EN — после ответа
+  updateSpeakBtn(false);
+  if (!askRu) speak(w.en);
+
+  if (answered[idx]) showFinalState(idx);
+  input.focus();
+}
+
+function updateSpeakBtn(revealed){
+  const w = VOCAB[order[pos]];
+  const btn = $("btnSpeak");
+  const canSpeak = (mode==="enru") || revealed;   // не подсказываем ответ в RU→EN
+  btn.classList.toggle("show", canSpeak);
+  btn.onclick = ()=>{ const opt=$("optSpeak"); if(!opt.checked) opt.checked=true; speak(w.en); };
+}
+
+function showFinalState(idx){
+  const w = VOCAB[idx];
+  const fb = $("feedback");
+  const input = $("answerInput");
+  input.disabled = true;
+  input.value = targetOf(w);
+  if (results[idx]==="fail"){
+    $("answerZone").classList.add("wrong");
+    fb.className = "feedback show err";
+    fb.innerHTML = "Правильный ответ: <span class='corr'>"+w.en+" — "+w.ru+"</span>";
+  } else {
+    $("answerZone").classList.add("right");
+    fb.className = "feedback show ok";
+    fb.innerHTML = "Верно!";
+  }
+  $("btnCheck").style.display = "none";
+  const nxt2 = $("btnSkipNext");
+  nxt2.style.display = "";
+  nxt2.className = "ctrl next-btn";
+  nxt2.textContent = pos < order.length-1 ? "Дальше →" : "Завершить ✓";
+  $("btnDontKnow").disabled = true;
+  updateSpeakBtn(true);
+}
+
+$("btnDontKnow").onclick = ()=>{
+  const idx = order[pos];
+  if (answered[idx]) return;
+  streakCount = 0; updateStreak();
+  failWord(idx, "Запомни: ");
+};
+
+$("btnBack").onclick = ()=>{ if (pos>0){ pos--; renderCard(); } };
+$("btnSkipNext").onclick = nextCard;
+$("btnExit").onclick = ()=>{ if (confirm("Выйти? Прогресс этого диктанта пропадёт.")) show("start"); };
+
+$("btnCheck").onclick = ()=>{
+  const idx = order[pos];
+  if (answered[idx]) { nextCard(); return; }
+  const w = VOCAB[idx];
+  const user = $("answerInput").value;
+  if (!user.trim()) { $("answerInput").focus(); return; }
+  const target = mode==="ruen" ? w.en : w.ru;
+  const res = checkAnswer(user, target, mode==="ruen");
+  const fb = $("feedback");
+
+  if (res==="ok"){
+    results[idx] = "ok";
+    answered[idx] = true;
+    if(!errorRound) recordStat(w.en, true);
+    streakCount++; updateStreak();
+    $("answerZone").className = "answer-zone right";
+    fb.className = "feedback show ok";
+    fb.innerHTML = PRAISE[Math.floor(Math.random()*PRAISE.length)];
+    $("answerInput").disabled = true;
+    speak(w.en);
+    updateSpeakBtn(true);
+    $("btnCheck").style.display = "none";
+    const nxt = $("btnSkipNext");
+    nxt.style.display = "";
+    nxt.className = "ctrl next-btn appear";
+    nxt.textContent = pos < order.length-1 ? "Дальше →" : "Завершить ✓";
+    nxt.focus();
+    const quiz = $("scrQuiz");
+    quiz.classList.remove("correct-flash");
+    void quiz.offsetWidth;
+    quiz.classList.add("correct-flash");
+    const r = $("answerInput").getBoundingClientRect();
+    burstParticles(r.left + r.width/2, r.top + r.height/2);
+    return;
+  }
+  if (res==="prefix" || res==="prefix-wrong" || res==="prefix-extra"){
+    fb.className = "feedback show info";
+    fb.innerHTML = res==="prefix"
+      ? "Слово верное! Но впереди кое-чего не хватает (a / an / to). Допиши."
+      : res==="prefix-wrong"
+      ? "Слово верное, но артикль не тот. Подумай: a или an?"
+      : "Слово верное, но здесь артикль не нужен — убери его.";
+    attempts[idx] = (attempts[idx]||0) + 0.5;
+    if (attempts[idx] >= 1.5){ streakCount=0; updateStreak(); failWord(idx, "Правильный ответ: "); }
+    return;
+  }
+  attempts[idx] = (attempts[idx]||0) + 1;
+  streakCount = 0; updateStreak();
+  if (attempts[idx] < 2){
+    $("answerZone").className = "answer-zone wrong";
+    fb.className = "feedback show err";
+    fb.innerHTML = "Пока не так. Попробуй ещё раз.";
+  } else {
+    failWord(idx, "Правильный ответ: ");
+  }
+};
+
+function failWord(idx, prefixText){
+  const w = VOCAB[idx];
+  results[idx] = "fail";
+  answered[idx] = true;
+  if(!errorRound) recordStat(w.en, false);
+  $("answerInput").value = targetOf(w);
+  $("answerInput").disabled = true;
+  $("answerZone").className = "answer-zone wrong";
+  const fb = $("feedback");
+  fb.className = "feedback show err";
+  fb.innerHTML = prefixText+"<span class='corr'>"+w.en+" — "+w.ru+"</span>";
+  speak(w.en);
+  updateSpeakBtn(true);
+  $("btnCheck").style.display = "none";
+  const nxt3 = $("btnSkipNext");
+  nxt3.style.display = "";
+  nxt3.className = "ctrl next-btn";
+  nxt3.textContent = pos < order.length-1 ? "Дальше →" : "Завершить ✓";
+  $("btnDontKnow").disabled = true;
+}
+
+function updateStreak(){
+  const el = $("streak");
+  if (streakCount>=3){ el.textContent = "🔥 "+streakCount; el.classList.add("show"); }
+  else el.classList.remove("show");
+}
+
+function nextCard(){
+  if (pos < order.length-1){ pos++; renderCard(); }
+  else finishRun();
+}
+
+$("answerInput").addEventListener("keydown", e=>{
+  if (e.key==="Enter"){
+    if ($("btnCheck").style.display!=="none") $("btnCheck").click();
+    else $("btnSkipNext").click();
+  }
+});
+document.addEventListener("keydown", e=>{
+  if (e.key==="Enter" && screens.quiz.classList.contains("active")
+      && $("btnSkipNext").style.display!=="none"
+      && document.activeElement!==$("answerInput")) $("btnSkipNext").click();
+});
+
+/* ---------- результаты ---------- */
+function finishRun(){
+  $("progFill").style.width = "100%";
+  const fails = order.filter(i=>results[i]==="fail");
+
+  if (!errorRound && fails.length && $("optRepeat").checked){
+    firstRoundResults = {...results};
+    startRun(fails, true);
+    return;
+  }
+
+  const base = firstRoundResults || results;
+  const all = Object.keys(base).map(Number);
+  const ok   = all.filter(i=>base[i]==="ok").length;
+  const fail = all.filter(i=>base[i]==="fail").length;
+  $("stOk").textContent = ok;
+  $("stFail").textContent = fail;
+
+  const pct = Math.round(ok/all.length*100);
+  $("resHead").textContent = pct===100 ? "Идеально! 🎉" : pct>=70 ? "Хороший результат! 👍" : "Есть над чем поработать 💪";
+  $("resScore").textContent = "Результат: "+pct+"%"+(errorRound ? " · ошибки отработаны повторно" : "");
+
+  const list = $("resList");
+  list.innerHTML = "";
+  all.forEach(i=>{
+    const w = VOCAB[i];
+    const m = base[i]==="ok" ? "✅" : "❌";
+    const tag = dim==="grp" ? w.grp : w.cat;
+    const div = document.createElement("div");
+    div.className = "res-item";
+    div.innerHTML = "<span><span class='w-en'>"+w.en+"</span> — <span class='w-ru'>"+w.ru.split(/[,;]/)[0]+"</span><span class='w-cat'>"+tag+"</span></span><span class='mark'>"+m+"</span>";
+    list.appendChild(div);
+  });
+
+  // выбранные темы/группы и затраченное время
+  const elapsed = runStartMs ? Date.now()-runStartMs : 0;
+  const themes = [...new Set(all.map(i=>VOCAB[i][dim]))];
+  const chips = themes.map(t=>"<span class='tchip'>"+t+"</span>").join("");
+  $("resMeta").innerHTML =
+    "<div class='row'><span class='ic'>📚</span><div><div>"+(dim==="grp"?"Группы слов":"Темы слов")
+      +":</div><div class='chips' style='margin-top:5px'>"+chips+"</div></div></div>"
+    +"<div class='row'><span class='ic'>⏱️</span><div><b>Время:</b> <span class='time-val'>"
+      +fmtTime(elapsed)+"</span> · слов: "+all.length+"</div></div>";
+
+  $("btnAgainErrors").style.display = fail>0 ? "" : "none";
+  window._lastErrors = all.filter(i=>base[i]==="fail");
+  firstRoundResults = null;
+  $("metaCount").textContent = "В наборе: "+VOCAB.length+" слов · выучено: "+learnedCount();
+  show("res");
+}
+
+$("btnAgainSetup").onclick = ()=>{ updateSummary(); show("start"); };
+$("btnAgainErrors").onclick = ()=>{
+  const bad = window._lastErrors || [];
+  if (bad.length){ runStartMs = Date.now(); startRun(bad, true); }
+};
+
+/* ---------- инициализация ---------- */
+$("setTitle").textContent = SET_TITLE;
+$("metaCount").textContent = "В наборе: "+VOCAB.length+" слов · выучено: "+learnedCount();
+setDim("cat");
+</script>
+</body>
+</html>
