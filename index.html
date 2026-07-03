@@ -1192,7 +1192,7 @@ const ADMIN_NAME="koba";          // это имя открывает панел
    │ (см. инструкцию). Пусто "" — работает только на этом          │
    │ устройстве, как раньше.                                       │
    └─────────────────────────────────────────────────────────────┘ */
-const SHEET_URL="";
+const SHEET_URL="https://script.google.com/macros/s/AKfycbyrbQgG8XHvtyvRdHIzI3DqgzGyiqtJ4sh_kfEnVfCuW8LIcWG6ICl1jyQCvO_yPou7/exec";
 function loadLog(){ try{return JSON.parse(localStorage.getItem(LOG_KEY))||{students:{}};}catch(e){return {students:{}};} }
 function saveLog(){ try{localStorage.setItem(LOG_KEY,JSON.stringify(LOG));}catch(e){} }
 let LOG=loadLog();
