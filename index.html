@@ -201,6 +201,42 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
 .res-meta .tchip{font-size:.74rem;font-weight:600;color:var(--blue);background:var(--blue-soft);border-radius:20px;padding:3px 10px}
 .res-meta .time-val{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 
+/* ---------- вход по имени ---------- */
+.name-input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:14px;
+  font-size:1.1rem;color:var(--ink);outline:none;font-family:Georgia,serif}
+.name-input:focus{border-color:var(--ink)}
+.userbar{display:flex;justify-content:flex-end;align-items:center;gap:12px;font-size:.82rem;
+  color:var(--ink-soft);margin:-6px 0 14px}
+.userbar b{color:var(--ink)}
+
+/* ---------- панель учителя ---------- */
+.admin-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:14px}
+.admin-head h2{font-family:Georgia,serif;font-size:1.3rem}
+.admin-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.admin-tools .ctrl{flex:1;min-width:120px;padding:10px 8px;font-size:.85rem}
+.ctrl.danger{border-color:var(--red);color:var(--red)}
+.ctrl.danger:hover:not(:disabled){background:var(--red-soft)}
+.admin-summary{font-size:.9rem;color:var(--ink-soft);margin-bottom:16px}
+.admin-summary b{color:var(--ink)}
+.admin-list{max-height:60vh;overflow-y:auto}
+.student-card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.student-card h3{font-family:Georgia,serif;font-size:1.12rem;margin-bottom:4px;
+  display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.student-card .who-meta{font-size:.76rem;color:var(--ink-soft);font-weight:400;white-space:nowrap}
+.student-card .visits{font-size:.8rem;color:var(--ink-soft);margin-bottom:8px}
+.dict-row{border-top:1px solid var(--line);padding:10px 0}
+.dict-row .dict-top{display:flex;justify-content:space-between;gap:8px;font-size:.92rem;align-items:baseline}
+.dict-row .dict-when{color:var(--ink-soft);font-size:.78rem;margin-top:2px}
+.dict-row .score-pill{font-weight:700;border-radius:20px;padding:2px 10px;font-size:.8rem;white-space:nowrap}
+.score-pill.good{background:var(--green-soft);color:var(--green)}
+.score-pill.mid{background:var(--amber-soft);color:var(--amber)}
+.score-pill.bad{background:var(--red-soft);color:var(--red)}
+.dict-row .dict-meta{font-size:.8rem;color:var(--ink-soft);margin-top:4px;line-height:1.5}
+.dict-row .err-words{margin-top:7px;display:flex;flex-wrap:wrap;gap:6px}
+.dict-row .err-chip{font-size:.76rem;background:var(--red-soft);color:var(--red);border-radius:8px;padding:2px 8px}
+.dict-row .err-chip b{font-weight:700;font-family:Georgia,serif}
+.empty-note{color:var(--ink-soft);font-size:.92rem;text-align:center;padding:34px 0}
+
 @media (max-width:420px){
   .screen{padding:20px 16px}
   .prompt-word{font-size:1.6rem}
@@ -217,8 +253,24 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
     <div class="set-title" id="setTitle"></div>
   </header>
 
+  <div class="userbar" id="userbar" style="display:none">
+    <span id="userWho"></span>
+    <button class="mini-link" id="btnLogout">сменить ученика</button>
+  </div>
+
+  <!-- ════════ ВХОД ════════ -->
+  <section class="screen start active" id="scrLogin">
+    <h2>Привет! 👋</h2>
+    <p class="meta">Напиши своё имя — тогда все твои результаты сохранятся, и учитель сможет их посмотреть.</p>
+    <div class="opt-group">
+      <span class="opt-label">Твоё имя</span>
+      <input class="name-input" id="nameInput" type="text" autocomplete="off" placeholder="например, Глеб">
+    </div>
+    <button class="big-start" id="btnLogin">Войти →</button>
+  </section>
+
   <!-- ════════ СТАРТ ════════ -->
-  <section class="screen start active" id="scrStart">
+  <section class="screen start" id="scrStart">
     <h2>Настрой свой диктант</h2>
     <p class="meta" id="metaCount"></p>
 
@@ -329,6 +381,21 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
       <button class="ctrl primary" id="btnAgainSetup">Новый диктант (настройки)</button>
       <button class="ctrl" id="btnAgainErrors" style="display:none">Повторить только ошибки</button>
     </div>
+  </section>
+
+  <!-- ════════ ПАНЕЛЬ УЧИТЕЛЯ (Koba) ════════ -->
+  <section class="screen admin" id="scrAdmin">
+    <div class="admin-head">
+      <h2>Журнал учеников</h2>
+      <button class="mini-link" id="btnAdminExit">← выйти</button>
+    </div>
+    <div class="admin-tools">
+      <button class="ctrl" id="btnExport">⬇ JSON</button>
+      <button class="ctrl" id="btnExportCsv">⬇ CSV (Excel)</button>
+      <button class="ctrl danger" id="btnClearLog">Очистить журнал</button>
+    </div>
+    <div class="admin-summary" id="adminSummary"></div>
+    <div class="admin-list" id="adminList"></div>
   </section>
 </div>
 
@@ -1115,6 +1182,72 @@ function learnedCount(){
   return VOCAB.filter(w=>{const s=STATS[w.en];return s&&s.seen>=2&&s.wrong/s.seen<0.34;}).length;
 }
 
+/* ---------- журнал учеников (имя, время входа, диктанты) ---------- */
+const LOG_KEY="wq_log_v1";
+const CUR_KEY="wq_current_v1";
+const ADMIN_NAME="koba";          // это имя открывает панель учителя
+/* ┌─────────────────────────────────────────────────────────────┐
+   │ ОНЛАЙН-СОХРАНЕНИЕ В GOOGLE ТАБЛИЦУ                            │
+   │ Вставь между кавычками ссылку на веб-приложение Apps Script   │
+   │ (см. инструкцию). Пусто "" — работает только на этом          │
+   │ устройстве, как раньше.                                       │
+   └─────────────────────────────────────────────────────────────┘ */
+const SHEET_URL="";
+function loadLog(){ try{return JSON.parse(localStorage.getItem(LOG_KEY))||{students:{}};}catch(e){return {students:{}};} }
+function saveLog(){ try{localStorage.setItem(LOG_KEY,JSON.stringify(LOG));}catch(e){} }
+let LOG=loadLog();
+let currentKey=null, currentName=null;   // текущий залогиненный ученик
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmtDateTime(ts){
+  try{ return new Date(ts).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+  catch(e){ return new Date(ts).toLocaleString(); }
+}
+function studentRec(key){
+  if(!LOG.students[key]) LOG.students[key]={name:currentName||key, firstSeen:Date.now(), visits:[], dictations:[]};
+  return LOG.students[key];
+}
+function recordVisit(name){                  // запоминаем имя + время входа
+  currentName=name.trim();
+  currentKey=currentName.toLowerCase();
+  const ts=Date.now();
+  const r=studentRec(currentKey);
+  r.name=currentName;                        // сохраняем последнее написание имени
+  r.visits.push(ts);
+  saveLog();
+  try{localStorage.setItem(CUR_KEY,currentName);}catch(e){}
+  postToSheet({type:"visit", name:currentName, ts:ts});
+}
+function recordDictation(entry){             // запоминаем один пройденный диктант
+  if(!currentKey) return;
+  studentRec(currentKey).dictations.push(entry);
+  saveLog();
+  postToSheet(Object.assign({type:"dictation", name:currentName}, entry));
+}
+
+/* отправка результата в Google Таблицу (не блокирует игру, ошибки не мешают) */
+function postToSheet(payload){
+  if(!SHEET_URL) return;
+  try{
+    fetch(SHEET_URL,{method:"POST",mode:"no-cors",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(payload)});
+  }catch(e){}
+}
+/* чтение всего журнала из Таблицы через JSONP (обходит ограничения браузера) */
+function fetchOnline(cb){
+  if(!SHEET_URL){ cb(null); return; }
+  const name="wqcb_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
+  const s=document.createElement("script");
+  let done=false;
+  function finish(data){ if(done)return; done=true; cb(data); try{delete window[name];}catch(e){} s.remove(); }
+  window[name]=function(data){ finish(data); };
+  s.onerror=function(){ finish(null); };
+  s.src=SHEET_URL+(SHEET_URL.indexOf("?")>=0?"&":"?")+"action=read&callback="+name+"&t="+Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ finish(null); },9000);
+}
+
 /* ---------- состояние ---------- */
 let mode = "ruen";            // "ruen" = RU→EN, "enru" = EN→RU
 let dim  = "cat";             // "cat" = по темам, "grp" = по типу слова
@@ -1138,7 +1271,7 @@ function fmtTime(ms){
 
 const PRAISE = ["Отлично, верно!","Точно в цель!","Super! Верно!","Молодец!","Именно так!","Great job!"];
 const $ = id => document.getElementById(id);
-const screens = { start:$("scrStart"), quiz:$("scrQuiz"), res:$("scrResults") };
+const screens = { login:$("scrLogin"), start:$("scrStart"), quiz:$("scrQuiz"), res:$("scrResults"), admin:$("scrAdmin") };
 function show(name){
   Object.values(screens).forEach(s=>s.classList.remove("active"));
   screens[name].classList.add("active");
@@ -1499,6 +1632,25 @@ function finishRun(){
     +"<div class='row'><span class='ic'>⏱️</span><div><b>Время:</b> <span class='time-val'>"
       +fmtTime(elapsed)+"</span> · слов: "+all.length+"</div></div>";
 
+  // запись диктанта в журнал ученика: сколько ошибок, какие слова, как долго
+  const errWords = all.filter(i=>base[i]==="fail").map(i=>{
+    const w=VOCAB[i];
+    return {en:w.en, ru:w.ru, cat:w.cat, grp:w.grp};
+  });
+  recordDictation({
+    finished: Date.now(),
+    durationMs: elapsed,
+    mode: mode,
+    dim: dim,
+    themes: themes,
+    total: all.length,
+    correct: ok,
+    wrong: fail,
+    percent: pct,
+    errorRound: errorRound,
+    errors: errWords
+  });
+
   $("btnAgainErrors").style.display = fail>0 ? "" : "none";
   window._lastErrors = all.filter(i=>base[i]==="fail");
   firstRoundResults = null;
@@ -1512,10 +1664,155 @@ $("btnAgainErrors").onclick = ()=>{
   if (bad.length){ runStartMs = Date.now(); startRun(bad, true); }
 };
 
+/* ---------- вход по имени / выход ---------- */
+function doLogin(){
+  const raw = $("nameInput").value.trim();
+  if(!raw){ $("nameInput").focus(); return; }
+  if(raw.toLowerCase()===ADMIN_NAME){        // учитель Koba — открываем журнал
+    $("nameInput").value="";
+    $("userbar").style.display="none";
+    renderAdmin();
+    show("admin");
+    return;
+  }
+  recordVisit(raw);
+  $("userWho").innerHTML = "👤 <b>"+escapeHtml(currentName)+"</b>";
+  $("userbar").style.display="flex";
+  updateSummary();
+  show("start");
+}
+$("btnLogin").onclick = doLogin;
+$("nameInput").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
+$("btnLogout").onclick = ()=>{
+  currentKey=null; currentName=null;
+  $("userbar").style.display="none";
+  let last=""; try{last=localStorage.getItem(CUR_KEY)||"";}catch(e){}
+  $("nameInput").value=last;
+  show("login");
+  $("nameInput").focus();
+};
+
+/* ---------- панель учителя ---------- */
+function scorePillClass(p){ return p>=80 ? "good" : p>=50 ? "mid" : "bad"; }
+function lastActivity(s){
+  const v=(s.visits&&s.visits.length)?s.visits[s.visits.length-1]:0;
+  const d=(s.dictations&&s.dictations.length)?s.dictations[s.dictations.length-1].finished:0;
+  return Math.max(v,d,s.firstSeen||0);
+}
+function renderAdmin(){
+  if(SHEET_URL){
+    $("adminSummary").innerHTML="Загружаю журнал из Google Таблицы…";
+    $("adminList").innerHTML="";
+    fetchOnline(function(online){
+      if(online && online.students) renderAdminData(online, "🌐 данные из Google Таблицы (со всех устройств)");
+      else renderAdminData(loadLog(), "⚠️ нет связи с Таблицей — показан журнал только этого устройства");
+    });
+  } else {
+    renderAdminData(loadLog(), "");
+  }
+}
+function renderAdminData(data, note){
+  window._adminData = {students:(data&&data.students)||{}};
+  const students = window._adminData.students;
+  const keys=Object.keys(students);
+  const sum=$("adminSummary"), list=$("adminList");
+  const noteHtml = note ? "<div style='font-size:.8rem;margin-top:4px'>"+note+"</div>" : "";
+  list.innerHTML="";
+  if(!keys.length){
+    sum.innerHTML=noteHtml;
+    list.innerHTML="<div class='empty-note'>Пока ни один ученик не заходил.</div>";
+    return;
+  }
+  let totalDict=0;
+  keys.forEach(k=>totalDict+=(students[k].dictations||[]).length);
+  sum.innerHTML="Учеников: <b>"+keys.length+"</b> · всего диктантов: <b>"+totalDict+"</b>"+noteHtml;
+  keys.sort((a,b)=>lastActivity(students[b])-lastActivity(students[a]));
+
+  keys.forEach(k=>{
+    const s=students[k];
+    const visits=s.visits||[];
+    const lastVisit = visits.length ? fmtDateTime(visits[visits.length-1]) : "—";
+    const ds=s.dictations||[];
+    let html="<h3><span>"+escapeHtml(s.name)+"</span><span class='who-meta'>заходов: "+visits.length+"</span></h3>";
+    html+="<div class='visits'>Первый раз: "+(s.firstSeen?fmtDateTime(s.firstSeen):"—")+" · последний вход: "+lastVisit+"</div>";
+    if(!ds.length){
+      html+="<div class='dict-meta'>Диктантов ещё нет.</div>";
+    } else {
+      [...ds].reverse().forEach(d=>{
+        const dir = d.mode==="ruen" ? "RU→EN" : "EN→RU";
+        html+="<div class='dict-row'>"
+          +"<div class='dict-top'><span><b>"+d.correct+"/"+d.total+"</b> верно"
+            +(d.errorRound?" · <i>работа над ошибками</i>":"")
+            +"</span><span class='score-pill "+scorePillClass(d.percent)+"'>"+d.percent+"%</span></div>"
+          +"<div class='dict-when'>"+fmtDateTime(d.finished)+"</div>"
+          +"<div class='dict-meta'>⏱ "+fmtTime(d.durationMs)+" · "+dir
+            +" · ошибок: "+d.wrong+" · темы: "+(d.themes||[]).map(escapeHtml).join(", ")+"</div>";
+        if(d.errors&&d.errors.length){
+          html+="<div class='err-words'>"+d.errors.map(e=>
+            "<span class='err-chip'><b>"+escapeHtml(e.en)+"</b> — "+escapeHtml(String(e.ru||"").split(/[,;\/]/)[0])+"</span>"
+          ).join("")+"</div>";
+        }
+        html+="</div>";
+      });
+    }
+    const card=document.createElement("div");
+    card.className="student-card";
+    card.innerHTML=html;
+    list.appendChild(card);
+  });
+}
+$("btnAdminExit").onclick = ()=>{ $("nameInput").value=""; show("login"); $("nameInput").focus(); };
+
+/* ---------- экспорт / очистка журнала ---------- */
+function downloadBlob(blob, filename){
+  const a=document.createElement("a"), url=URL.createObjectURL(blob);
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 100);
+}
+function csvCell(v){
+  const s=String(v==null?"":v);
+  return /[",\r\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function adminSource(){ return (window._adminData && window._adminData.students) ? window._adminData : LOG; }
+function buildCsv(){
+  const src=adminSource().students;
+  const rows=[["Ученик","Дата","Время (сек)","Направление","Всего","Верно","Ошибок","Процент","Работа над ошибками","Темы","Слова с ошибками"]];
+  Object.keys(src).forEach(k=>{
+    const s=src[k];
+    (s.dictations||[]).forEach(d=>{
+      rows.push([ s.name, fmtDateTime(d.finished), Math.round((d.durationMs||0)/1000),
+        d.mode==="ruen"?"RU->EN":"EN->RU", d.total, d.correct, d.wrong, d.percent+"%",
+        d.errorRound?"да":"нет", (d.themes||[]).join(" | "),
+        (d.errors||[]).map(e=>e.en+" ("+String(e.ru||"").split(/[,;\/]/)[0]+")").join(" | ") ]);
+    });
+  });
+  return rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
+}
+$("btnExport").onclick = ()=>{
+  downloadBlob(new Blob([JSON.stringify(adminSource(),null,2)],{type:"application/json"}), "word-quiz-zhurnal.json");
+};
+$("btnExportCsv").onclick = ()=>{
+  downloadBlob(new Blob(["﻿"+buildCsv()],{type:"text/csv;charset=utf-8"}), "word-quiz-zhurnal.csv");
+};
+$("btnClearLog").onclick = ()=>{
+  const msg = SHEET_URL
+    ? "Очистить журнал ТОЛЬКО на этом устройстве? Данные в Google Таблице не тронутся — их удаляют прямо в таблице."
+    : "Удалить журнал всех учеников и все диктанты? Это действие нельзя отменить.";
+  if(confirm(msg)){
+    LOG={students:{}}; saveLog(); renderAdmin();
+  }
+};
+
 /* ---------- инициализация ---------- */
 $("setTitle").textContent = SET_TITLE;
 $("metaCount").textContent = "В наборе: "+VOCAB.length+" слов · выучено: "+learnedCount();
 setDim("cat");
+(function initLogin(){
+  let last=""; try{last=localStorage.getItem(CUR_KEY)||"";}catch(e){}
+  $("nameInput").value=last;
+  setTimeout(()=>$("nameInput").focus(), 60);
+})();
 </script>
 </body>
 </html>
