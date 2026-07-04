@@ -237,6 +237,33 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
 .dict-row .err-chip b{font-weight:700;font-family:Georgia,serif}
 .empty-note{color:var(--ink-soft);font-size:.92rem;text-align:center;padding:34px 0}
 
+/* ---------- карточки (flashcards) ---------- */
+.flashcard{perspective:1200px;margin:8px 0 6px;cursor:pointer}
+.fc-inner{position:relative;width:100%;min-height:210px;transition:transform .5s;transform-style:preserve-3d}
+.fc-inner.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;
+  border:1.5px solid var(--line);border-radius:var(--radius);background:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:22px 18px}
+.fc-back{transform:rotateY(180deg);background:var(--green-soft);border-color:var(--green)}
+.fc-hint{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft)}
+.fc-word{font-family:Georgia,serif;font-size:2rem;text-align:center;line-height:1.2}
+.ctrl.card-dont{border-color:var(--amber);color:var(--amber)}
+.ctrl.card-dont:hover:not(:disabled){background:var(--amber-soft)}
+.ctrl.card-know{border-color:var(--green);color:#fff;background:var(--green)}
+.ctrl.card-know:hover:not(:disabled){background:#256B42}
+
+/* ---------- игра «Найди пару» ---------- */
+.match-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.match-tile{min-height:66px;border:1.5px solid var(--line);border-radius:10px;background:#fff;padding:10px 8px;
+  font-size:.95rem;font-weight:600;color:var(--ink);cursor:pointer;text-align:center;
+  display:flex;align-items:center;justify-content:center;transition:transform .12s,background .15s,border-color .15s,opacity .3s}
+.match-tile.en{font-family:Georgia,serif}
+.match-tile.sel{border-color:var(--ink);background:#EFF6F1;transform:scale(1.03)}
+.match-tile.bad{border-color:var(--red);background:var(--red-soft);color:var(--red)}
+.match-tile.ok{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+.match-tile.done{opacity:0;pointer-events:none;transform:scale(.75)}
+
 @media (max-width:420px){
   .screen{padding:20px 16px}
   .prompt-word{font-size:1.6rem}
@@ -271,10 +298,19 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
 
   <!-- ════════ СТАРТ ════════ -->
   <section class="screen start" id="scrStart">
-    <h2>Настрой свой диктант</h2>
+    <h2 id="startHead">Настрой свой диктант</h2>
     <p class="meta" id="metaCount"></p>
 
     <div class="opt-group">
+      <span class="opt-label">Чем занимаемся</span>
+      <div class="mode-row">
+        <button class="mode-btn selected" id="actQuiz"><span class="dir">Диктант</span><span class="expl">пишу перевод</span></button>
+        <button class="mode-btn" id="actCards"><span class="dir">Карточки</span><span class="expl">знаю / не знаю</span></button>
+        <button class="mode-btn" id="actMatch"><span class="dir">Найди пару</span><span class="expl">игра на время</span></button>
+      </div>
+    </div>
+
+    <div class="opt-group" id="grpDirection">
       <span class="opt-label">Направление перевода</span>
       <div class="mode-row">
         <button class="mode-btn selected" id="modeRuEn">
@@ -326,7 +362,7 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
     <div class="opt-group">
       <span class="opt-label">Настройки</span>
       <label class="toggle-row"><input type="checkbox" id="optShuffle" checked> Перемешать слова</label>
-      <label class="toggle-row"><input type="checkbox" id="optRepeat" checked> Повторить ошибки в конце</label>
+      <label class="toggle-row" id="rowRepeat"><input type="checkbox" id="optRepeat" checked> Повторить ошибки в конце</label>
       <label class="toggle-row"><input type="checkbox" id="optSpeak" checked> Озвучивать английские слова 🔊</label>
       <label class="toggle-row"><input type="checkbox" id="optHard"> Сначала трудные слова</label>
     </div>
@@ -380,6 +416,54 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
     <div class="res-actions">
       <button class="ctrl primary" id="btnAgainSetup">Новый диктант (настройки)</button>
       <button class="ctrl" id="btnAgainErrors" style="display:none">Повторить только ошибки</button>
+    </div>
+  </section>
+
+  <!-- ════════ КАРТОЧКИ ════════ -->
+  <section class="screen" id="scrCards">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="cardsFill"></div></div>
+      <span class="progress-num" id="cardsNum"></span>
+    </div>
+    <div class="flashcard" id="flashcard">
+      <div class="fc-inner" id="fcInner">
+        <div class="fc-face fc-front">
+          <span class="fc-hint">нажми, чтобы перевернуть</span>
+          <span class="cat-tag" id="fcCat"></span>
+          <div class="fc-word" id="fcFront"></div>
+        </div>
+        <div class="fc-face fc-back">
+          <span class="fc-hint">перевод</span>
+          <div class="fc-word" id="fcBack"></div>
+          <button class="speak-btn show" id="fcSpeak" type="button" title="Послушать">🔊</button>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctrl card-dont" id="cardDont">Ещё учу</button>
+      <button class="ctrl card-know" id="cardKnow">Знаю ✓</button>
+    </div>
+    <button class="exit-link" id="cardsExit">⟵ выйти к настройкам</button>
+  </section>
+
+  <!-- ════════ ИГРА «НАЙДИ ПАРУ» ════════ -->
+  <section class="screen" id="scrMatch">
+    <div class="match-top">
+      <span class="round-badge show" id="matchInfo">Найди пару</span>
+      <span class="progress-num"><span id="matchTimer">0.0</span> с · ошибок: <span id="matchErr">0</span></span>
+    </div>
+    <div class="match-grid" id="matchGrid"></div>
+    <button class="exit-link" id="matchExit">⟵ выйти к настройкам</button>
+  </section>
+
+  <!-- ════════ ИТОГ (карточки / игра) ════════ -->
+  <section class="screen results" id="scrDone">
+    <h2 id="doneHead">Готово!</h2>
+    <p class="score-line" id="doneScore"></p>
+    <div class="stat-row" id="doneStats"></div>
+    <div class="res-actions">
+      <button class="ctrl primary" id="doneAgain">Ещё раз</button>
+      <button class="ctrl" id="doneSetup">К настройкам</button>
     </div>
   </section>
 
@@ -1271,7 +1355,8 @@ function fmtTime(ms){
 
 const PRAISE = ["Отлично, верно!","Точно в цель!","Super! Верно!","Молодец!","Именно так!","Great job!"];
 const $ = id => document.getElementById(id);
-const screens = { login:$("scrLogin"), start:$("scrStart"), quiz:$("scrQuiz"), res:$("scrResults"), admin:$("scrAdmin") };
+const screens = { login:$("scrLogin"), start:$("scrStart"), quiz:$("scrQuiz"), res:$("scrResults"),
+                  cards:$("scrCards"), match:$("scrMatch"), done:$("scrDone"), admin:$("scrAdmin") };
 function show(name){
   Object.values(screens).forEach(s=>s.classList.remove("active"));
   screens[name].classList.add("active");
@@ -1392,12 +1477,37 @@ function updateSummary(){
 $("modeRuEn").onclick = ()=>{ mode="ruen"; $("modeRuEn").classList.add("selected"); $("modeEnRu").classList.remove("selected"); };
 $("modeEnRu").onclick = ()=>{ mode="enru"; $("modeEnRu").classList.add("selected"); $("modeRuEn").classList.remove("selected"); };
 
-$("btnStart").onclick = ()=>{
+/* ---------- выбор занятия: диктант / карточки / игра ---------- */
+let activity = "quiz";
+function setActivity(a){
+  activity = a;
+  $("actQuiz").classList.toggle("selected", a==="quiz");
+  $("actCards").classList.toggle("selected", a==="cards");
+  $("actMatch").classList.toggle("selected", a==="match");
+  $("grpDirection").style.display = a==="match" ? "none" : "";  // в игре показываем оба языка
+  $("rowRepeat").style.display   = a==="quiz"  ? "" : "none";   // «повтор ошибок» только для диктанта
+  $("startHead").textContent = a==="cards" ? "Настрой карточки" : a==="match" ? "Настрой игру" : "Настрой свой диктант";
+  $("btnStart").textContent  = a==="cards" ? "Начать карточки" : a==="match" ? "Начать игру" : "Начать диктант";
+}
+$("actQuiz").onclick  = ()=>setActivity("quiz");
+$("actCards").onclick = ()=>setActivity("cards");
+$("actMatch").onclick = ()=>setActivity("match");
+
+/* общий подбор слов (перемешать / трудные / количество) */
+function buildOrder(){
   let pool = poolWords().map(o=>o.i);
   if ($("optShuffle").checked) pool.sort(()=>Math.random()-0.5);
   if ($("optHard").checked) pool.sort((a,b)=>hardScore(VOCAB[b])-hardScore(VOCAB[a]));
+  return pool.slice(0, plannedCount());
+}
+
+$("btnStart").onclick = ()=>{
+  const ord = buildOrder();
+  if (!ord.length) return;
   runStartMs = Date.now();
-  startRun(pool.slice(0, plannedCount()), false);
+  if (activity==="cards")      startCards(ord);
+  else if (activity==="match") startMatch(ord);
+  else                         startRun(ord, false);
 };
 
 function startRun(indices, isErrorRound){
@@ -1664,6 +1774,134 @@ $("btnAgainErrors").onclick = ()=>{
   if (bad.length){ runStartMs = Date.now(); startRun(bad, true); }
 };
 
+/* ═══════════════════ КАРТОЧКИ (flashcards) ═══════════════════ */
+let cardOrder=[], cardPos=0, cardKnowN=0, cardDontN=0, cardFlipped=false;
+function startCards(indices){
+  cardOrder=[...indices]; cardPos=0; cardKnowN=0; cardDontN=0;
+  show("cards"); renderCardFace();
+}
+function renderCardFace(){
+  const w = VOCAB[cardOrder[cardPos]];
+  const askRu = mode==="ruen";            // RU→EN: спереди русское, сзади английское
+  cardFlipped=false;
+  $("fcInner").classList.remove("flipped");
+  $("fcCat").textContent   = dim==="grp" ? w.grp : w.cat;
+  $("fcFront").textContent = askRu ? w.ru.split(/[,;\/]/)[0] : w.en;
+  $("fcBack").textContent  = askRu ? w.en : w.ru;
+  $("cardsNum").textContent = (cardPos+1)+" / "+cardOrder.length;
+  $("cardsFill").style.width = (cardPos/cardOrder.length*100)+"%";
+  if(!askRu) speak(w.en);                 // английское уже видно спереди — озвучим
+}
+function flipCard(){
+  cardFlipped=!cardFlipped;
+  $("fcInner").classList.toggle("flipped", cardFlipped);
+  if(cardFlipped) speak(VOCAB[cardOrder[cardPos]].en);  // на обороте — английское
+}
+function cardAnswer(know){
+  const w = VOCAB[cardOrder[cardPos]];
+  recordStat(w.en, know);
+  if(know) cardKnowN++; else cardDontN++;
+  if(cardPos < cardOrder.length-1){ cardPos++; renderCardFace(); }
+  else finishCards();
+}
+function finishCards(){
+  $("cardsFill").style.width="100%";
+  const total = cardKnowN + cardDontN;
+  const pct = total ? Math.round(cardKnowN/total*100) : 0;
+  $("doneHead").textContent  = pct===100 ? "Все знаешь! 🎉" : pct>=70 ? "Отлично идёт! 👍" : "Хорошая тренировка 💪";
+  $("doneScore").textContent = "Карточки · "+total+" слов";
+  $("doneStats").innerHTML =
+    "<div class='stat g'><span class='n'>"+cardKnowN+"</span><span class='l'>знаю</span></div>"+
+    "<div class='stat r'><span class='n'>"+cardDontN+"</span><span class='l'>ещё учу</span></div>";
+  $("metaCount").textContent = "В наборе: "+VOCAB.length+" слов · выучено: "+learnedCount();
+  window._replay = ()=>startCards(cardOrder);
+  show("done");
+}
+$("flashcard").onclick = flipCard;
+$("fcSpeak").onclick = (e)=>{ e.stopPropagation(); const o=$("optSpeak"); if(!o.checked)o.checked=true; speak(VOCAB[cardOrder[cardPos]].en); };
+$("cardKnow").onclick = ()=>cardAnswer(true);
+$("cardDont").onclick = ()=>cardAnswer(false);
+$("cardsExit").onclick = ()=>show("start");
+
+/* ═══════════════════ ИГРА «НАЙДИ ПАРУ» ═══════════════════ */
+const MATCH_BATCH = 6;                 // пар на одном экране
+let matchQueue=[], matchErrs=0, matchSel=null, matchLeft=0, matchTimerId=null, matchStartMs=0, matchErred=null, matchOrder=[];
+function startMatch(indices){
+  matchOrder=[...indices];
+  matchQueue=[...indices];
+  matchErrs=0; matchSel=null; matchErred=new Set();
+  $("matchErr").textContent="0";
+  show("match");
+  matchStartMs=Date.now();
+  clearInterval(matchTimerId);
+  matchTimerId=setInterval(()=>{ $("matchTimer").textContent=((Date.now()-matchStartMs)/1000).toFixed(1); }, 100);
+  nextMatchBatch();
+}
+function nextMatchBatch(){
+  const batch = matchQueue.splice(0, MATCH_BATCH);
+  matchLeft = batch.length;
+  const tiles=[];
+  batch.forEach(idx=>{
+    const w=VOCAB[idx];
+    tiles.push({idx, side:"en", text:w.en});
+    tiles.push({idx, side:"ru", text:w.ru.split(/[,;\/]/)[0]});
+  });
+  tiles.sort(()=>Math.random()-0.5);
+  const grid=$("matchGrid");
+  grid.innerHTML="";
+  matchSel=null;
+  tiles.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="match-tile"+(t.side==="en"?" en":"");
+    b.textContent=t.text;
+    b.dataset.idx=t.idx; b.dataset.side=t.side;
+    b.onclick=()=>tapTile(b);
+    grid.appendChild(b);
+  });
+}
+function tapTile(b){
+  if(b.classList.contains("done")) return;
+  if(matchSel===b){ b.classList.remove("sel"); matchSel=null; return; }
+  if(!matchSel){ matchSel=b; b.classList.add("sel"); return; }
+  const a=matchSel;
+  if(a.dataset.idx===b.dataset.idx && a.dataset.side!==b.dataset.side){
+    // верная пара
+    [a,b].forEach(t=>{ t.classList.remove("sel"); t.classList.add("ok"); });
+    const idx=+a.dataset.idx;
+    setTimeout(()=>{ a.classList.add("done"); b.classList.add("done"); }, 220);
+    recordStat(VOCAB[idx].en, !matchErred.has(idx));
+    matchSel=null;
+    if(--matchLeft===0){
+      if(matchQueue.length) setTimeout(nextMatchBatch, 350);
+      else setTimeout(finishMatch, 350);
+    }
+  } else {
+    // ошибка
+    matchErrs++; $("matchErr").textContent=matchErrs;
+    matchErred.add(+a.dataset.idx); matchErred.add(+b.dataset.idx);
+    a.classList.remove("sel"); a.classList.add("bad"); b.classList.add("bad");
+    matchSel=null;
+    setTimeout(()=>{ a.classList.remove("bad"); b.classList.remove("bad"); }, 550);
+  }
+}
+function finishMatch(){
+  clearInterval(matchTimerId);
+  const secs = ((Date.now()-matchStartMs)/1000).toFixed(1);
+  $("doneHead").textContent  = matchErrs===0 ? "Идеально! 🎯" : "Пары собраны! 🎉";
+  $("doneScore").textContent = "Игра «Найди пару» · "+matchOrder.length+" слов";
+  $("doneStats").innerHTML =
+    "<div class='stat g'><span class='n'>"+secs+"</span><span class='l'>секунд</span></div>"+
+    "<div class='stat r'><span class='n'>"+matchErrs+"</span><span class='l'>ошибок</span></div>";
+  $("metaCount").textContent = "В наборе: "+VOCAB.length+" слов · выучено: "+learnedCount();
+  window._replay = ()=>startMatch(matchOrder);
+  show("done");
+}
+$("matchExit").onclick = ()=>{ clearInterval(matchTimerId); show("start"); };
+
+/* ---------- итоговый экран карточек / игры ---------- */
+$("doneAgain").onclick = ()=>{ if(window._replay) window._replay(); };
+$("doneSetup").onclick = ()=>{ updateSummary(); show("start"); };
+
 /* ---------- вход по имени / выход ---------- */
 function doLogin(){
   const raw = $("nameInput").value.trim();
@@ -1808,6 +2046,7 @@ $("btnClearLog").onclick = ()=>{
 $("setTitle").textContent = SET_TITLE;
 $("metaCount").textContent = "В наборе: "+VOCAB.length+" слов · выучено: "+learnedCount();
 setDim("cat");
+setActivity("quiz");
 (function initLogin(){
   let last=""; try{last=localStorage.getItem(CUR_KEY)||"";}catch(e){}
   $("nameInput").value=last;
