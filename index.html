@@ -321,7 +321,7 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
           <span class="dir">RU → EN</span>
           <span class="expl">вижу русское — пишу английское</span>
         </button>
-        <button class="mode-btn" id="modeEnRu">
+        <button class="mode-btn" id="modeEnRu" style="display:none">
           <span class="dir">EN → RU</span>
           <span class="expl">вижу английское — пишу русское</span>
         </button>
@@ -355,10 +355,10 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
     <div class="opt-group">
       <span class="opt-label">Сколько слов</span>
       <div class="count-row">
-        <button class="count-btn" data-n="10">10</button>
+        <button class="count-btn selected" data-n="10">10</button>
         <button class="count-btn" data-n="15">15</button>
         <button class="count-btn" data-n="20">20</button>
-        <button class="count-btn selected" data-n="all">Все</button>
+        <button class="count-btn" data-n="all">Все</button>
         <input class="count-input" id="countCustom" type="number" min="1" placeholder="своё">
       </div>
     </div>
@@ -1348,7 +1348,7 @@ let errorRound = false;
 let firstRoundResults = null;
 let streakCount = 0;
 let selected = new Set();     // выбранные значения текущего измерения
-let countChoice = "all";
+let countChoice = "10";
 let runStartMs = 0;           // время старта диктанта (для подсчёта длительности)
 
 function fmtTime(ms){
@@ -1410,7 +1410,7 @@ function buildCats(){
   dimValues().forEach(c=>{
     const n = VOCAB.filter(w=>w[dim]===c).length;
     const chip = document.createElement("button");
-    chip.className = "cat-chip selected";
+    chip.className = "cat-chip";
     chip.innerHTML = c+" <span class='cnt'>"+n+"</span>";
     chip.onclick = ()=>{
       chip.classList.toggle("selected");
@@ -1418,7 +1418,6 @@ function buildCats(){
       updateSummary();
     };
     grid.appendChild(chip);
-    selected.add(c);
   });
   updateSummary();
 }
