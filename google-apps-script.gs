@@ -27,19 +27,22 @@ function doPost(e){
       getSheet_(VISITS, ["Имя","Время входа"])
         .appendRow([ d.name, new Date(d.ts || Date.now()) ]);
     } else if(d.type === "dictation"){
-      getSheet_(DICTS, ["Имя","Дата","Время (сек)","Направление","Всего","Верно",
-                        "Ошибок","Процент","Работа над ошибками","Темы","Слова с ошибками"])
-        .appendRow([
+      var sh = getSheet_(DICTS, ["Имя","Дата","Время (сек)","Направление","Всего","Верно",
+                        "Ошибок","Процент","Работа над ошибками","Темы","Слова с ошибками","Режим"]);
+      if(!sh.getRange(1,12).getValue()) sh.getRange(1,12).setValue("Режим");   // дополнить старую шапку
+      var actLabel = {quiz:"Диктант", cards:"Карточки", match:"Игра"}[d.act] || "Диктант";
+      sh.appendRow([
           d.name,
           new Date(d.finished || Date.now()),
           Math.round((d.durationMs || 0) / 1000),
-          d.mode === "ruen" ? "RU->EN" : "EN->RU",
+          (d.act && d.act !== "quiz") ? "—" : (d.mode === "ruen" ? "RU->EN" : "EN->RU"),
           d.total, d.correct, d.wrong, d.percent,
           d.errorRound ? "да" : "нет",
           (d.themes || []).join(" | "),
           (d.errors || []).map(function(x){
             return x.en + " (" + String(x.ru || "").split(/[,;\/]/)[0] + ")";
-          }).join(" | ")
+          }).join(" | "),
+          actLabel
         ]);
     }
     return ContentService.createTextOutput("ok");
@@ -70,7 +73,7 @@ function doGet(e){
 
   var ds = ss.getSheetByName(DICTS);
   if(ds && ds.getLastRow() > 1){
-    ds.getRange(2,1,ds.getLastRow()-1,11).getValues().forEach(function(r){
+    ds.getRange(2,1,ds.getLastRow()-1,12).getValues().forEach(function(r){
       var s = rec(r[0]); if(!s) return;
       var ts = (r[1] instanceof Date) ? r[1].getTime() : Date.parse(r[1]);
       var errStr = String(r[10] || "");
@@ -78,7 +81,9 @@ function doGet(e){
         var m = t.match(/^(.*)\s+\((.*)\)$/);
         return m ? {en:m[1], ru:m[2]} : {en:t, ru:""};
       }) : [];
+      var actMap = {"Карточки":"cards", "Игра":"match"};
       s.dictations.push({
+        act: actMap[String(r[11] || "")] || "quiz",
         finished: ts || 0,
         durationMs: (Number(r[2]) || 0) * 1000,
         mode: (r[3] === "RU->EN") ? "ruen" : "enru",
