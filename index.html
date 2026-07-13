@@ -239,6 +239,18 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
 .kind-badge.kind-quiz{background:var(--blue-soft);color:var(--blue)}
 .kind-badge.kind-cards{background:var(--amber-soft);color:var(--amber)}
 .kind-badge.kind-match{background:var(--green-soft);color:var(--green)}
+.kind-badge.kind-grammar{background:#EFE9F6;color:#6A4AA0}
+
+/* ---------- грамматика ---------- */
+.gram-hint{font-size:.8rem;color:var(--ink-soft);line-height:1.55;background:var(--amber-soft);border-radius:10px;padding:10px 12px;margin-top:10px}
+.gram-hint b{color:var(--ink)}
+.gram-sentence{font-family:Georgia,serif;font-size:1.3rem;line-height:1.8;margin-bottom:8px;color:var(--ink)}
+.gram-input{font-family:Georgia,serif;font-size:1.15rem;color:var(--ink);border:none;border-bottom:2px solid var(--rule);
+  background:transparent;outline:none;text-align:center;padding:2px 4px}
+.gram-input:focus{border-bottom-color:var(--ink)}
+.gram-input:disabled{color:var(--ink-soft)}
+.gram-sentence.wrong .gram-input{border-bottom-color:var(--red);color:var(--red)}
+.gram-sentence.right .gram-input{border-bottom-color:var(--green);color:var(--green)}
 .empty-note{color:var(--ink-soft);font-size:.92rem;text-align:center;padding:34px 0}
 
 /* ---------- карточки (flashcards) ---------- */
@@ -306,6 +318,15 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
     <p class="meta" id="metaCount"></p>
 
     <div class="opt-group">
+      <span class="opt-label">Раздел</span>
+      <div class="mode-row">
+        <button class="mode-btn selected" id="secVocab"><span class="dir">✍️ Диктанты</span><span class="expl">английские слова</span></button>
+        <button class="mode-btn" id="secGrammar"><span class="dir">📖 Грамматика</span><span class="expl">Present Simple / Continuous</span></button>
+      </div>
+    </div>
+
+    <div id="vocabOpts">
+    <div class="opt-group">
       <span class="opt-label">Чем занимаемся</span>
       <div class="mode-row">
         <button class="mode-btn selected" id="actQuiz"><span class="dir">Диктант</span><span class="expl">пишу перевод</span></button>
@@ -351,9 +372,23 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
       </span>
       <div class="cat-grid" id="catGrid"></div>
     </div>
+    </div><!-- /vocabOpts -->
+
+    <div id="grammarOpts" style="display:none">
+    <div class="opt-group">
+      <span class="opt-label">Разделы грамматики
+        <span style="display:flex;gap:14px">
+          <button class="mini-link" id="btnAllParts">выбрать все</button>
+          <button class="mini-link" id="btnNoneParts">убрать выделение</button>
+        </span>
+      </span>
+      <div class="cat-grid" id="gramGrid"></div>
+      <div class="gram-hint">💡 <b>right now / now / at the moment</b> → am/is/are + <b>-ing</b>;&nbsp;&nbsp;<b>usually / often / every day</b> → обычная форма (+s для he/she/it)</div>
+    </div>
+    </div><!-- /grammarOpts -->
 
     <div class="opt-group">
-      <span class="opt-label">Сколько слов</span>
+      <span class="opt-label" id="countLabel">Сколько слов</span>
       <div class="count-row">
         <button class="count-btn selected" data-n="10">10</button>
         <button class="count-btn" data-n="15">15</button>
@@ -367,8 +402,8 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
       <span class="opt-label">Настройки</span>
       <label class="toggle-row"><input type="checkbox" id="optShuffle" checked> Перемешать слова</label>
       <label class="toggle-row" id="rowRepeat"><input type="checkbox" id="optRepeat" checked> Повторить ошибки в конце</label>
-      <label class="toggle-row"><input type="checkbox" id="optSpeak" checked> Озвучивать английские слова 🔊</label>
-      <label class="toggle-row"><input type="checkbox" id="optHard"> Сначала трудные слова</label>
+      <label class="toggle-row" id="rowSpeak"><input type="checkbox" id="optSpeak" checked> Озвучивать английские слова 🔊</label>
+      <label class="toggle-row" id="rowHard"><input type="checkbox" id="optHard"> Сначала трудные слова</label>
     </div>
 
     <div class="start-summary" id="startSummary"></div>
@@ -421,6 +456,26 @@ h1 .sub{display:block;font-family:system-ui,sans-serif;font-size:.8rem;font-weig
       <button class="ctrl primary" id="btnAgainSetup">Новый диктант (настройки)</button>
       <button class="ctrl" id="btnAgainErrors" style="display:none">Повторить только ошибки</button>
     </div>
+  </section>
+
+  <!-- ════════ ГРАММАТИКА (Present Simple / Continuous) ════════ -->
+  <section class="screen" id="scrGrammar">
+    <div class="progress-wrap">
+      <span class="round-badge" id="gramRound">Работа над ошибками</span>
+      <div class="progress-bar"><div class="progress-fill" id="gramFill"></div></div>
+      <span class="progress-num" id="gramNum"></span>
+      <span class="streak" id="gramStreak"></span>
+    </div>
+    <span class="cat-tag" id="gramTag"></span>
+    <div class="prompt-label">Впиши правильную форму глагола:</div>
+    <div class="gram-sentence" id="gramSentence"></div>
+    <div class="feedback" id="gramFeedback"></div>
+    <div class="controls">
+      <button class="ctrl" id="gramDont">Не знаю</button>
+      <button class="ctrl primary" id="gramCheck">Проверить</button>
+      <button class="ctrl next-btn" id="gramNext" style="display:none">Дальше →</button>
+    </div>
+    <button class="exit-link" id="gramExit">⟵ выйти к настройкам</button>
   </section>
 
   <!-- ════════ КАРТОЧКИ ════════ -->
@@ -1217,6 +1272,812 @@ const VOCAB = [
 ];
 /* ═══════════════════ DATEN-BLOCK ENDE ═══════════════════ */
 
+/* ═══ GRAMMAR-BLOCK START — Present Simple/Continuous, 800 предложений из документа ═══ */
+const GRAMMAR = [
+  {p:"Утвердительные", s:"Our neighbours ________ (run) around the playground right now.", a:"are running"},
+  {p:"Утвердительные", s:"The children always ________ (stand) at the bus stop.", a:"stand"},
+  {p:"Утвердительные", s:"He ________ (get) up early at the moment.", a:"is getting"},
+  {p:"Утвердительные", s:"We ________ (do) the washing-up after dinner now.", a:"are doing"},
+  {p:"Утвердительные", s:"The students often ________ (look) at a photo.", a:"look"},
+  {p:"Утвердительные", s:"My cat ________ (watch) a fly on the wall at the moment.", a:"is watching"},
+  {p:"Утвердительные", s:"Anna and Lucy ________ (sit) at the kitchen table at the moment.", a:"are sitting"},
+  {p:"Утвердительные", s:"Tom ________ (close) the bedroom door twice a month.", a:"closes"},
+  {p:"Утвердительные", s:"The new student ________ (sit) near the window right now.", a:"is sitting"},
+  {p:"Утвердительные", s:"Tom and Ben ________ (look) at the map at the moment.", a:"are looking"},
+  {p:"Утвердительные", s:"The new student ________ (eat) lunch at school right now.", a:"is eating"},
+  {p:"Утвердительные", s:"Lucy ________ (sing) at the concert right now.", a:"is singing"},
+  {p:"Утвердительные", s:"I ________ (stand) in front of the class right now.", a:"am standing"},
+  {p:"Утвердительные", s:"My brother ________ (come) to visit friends every day.", a:"comes"},
+  {p:"Утвердительные", s:"You ________ (eat) lunch at school now.", a:"are eating"},
+  {p:"Утвердительные", s:"The children ________ (write) the answers in a notebook right now.", a:"are writing"},
+  {p:"Утвердительные", s:"The dog ________ (wait) under the table right now.", a:"is waiting"},
+  {p:"Утвердительные", s:"My friends ________ (run) very quickly now.", a:"are running"},
+  {p:"Утвердительные", s:"Our neighbours ________ (build) a model house right now.", a:"are building"},
+  {p:"Утвердительные", s:"My parents ________ (go) to the sports club now.", a:"are going"},
+  {p:"Утвердительные", s:"We ________ (practise) the piano right now.", a:"are practising"},
+  {p:"Утвердительные", s:"They often ________ (dance) with friends.", a:"dance"},
+  {p:"Утвердительные", s:"My cat ________ (run) across the room at the moment.", a:"is running"},
+  {p:"Утвердительные", s:"You often ________ (paint) a model plane.", a:"paint"},
+  {p:"Утвердительные", s:"She ________ (carry) a box to the classroom right now.", a:"is carrying"},
+  {p:"Утвердительные", s:"Anna and Lucy usually ________ (prepare) lunch.", a:"prepare"},
+  {p:"Утвердительные", s:"My friends ________ (talk) about the school trip every morning.", a:"talk"},
+  {p:"Утвердительные", s:"My brother ________ (write) an email to a friend right now.", a:"is writing"},
+  {p:"Утвердительные", s:"Tom ________ (sing) at the concert on school days.", a:"sings"},
+  {p:"Утвердительные", s:"My brother rarely ________ (talk) about a new game.", a:"talks"},
+  {p:"Утвердительные", s:"The students rarely ________ (watch) a football match.", a:"watch"},
+  {p:"Утвердительные", s:"Our neighbours sometimes ________ (draw) a map for the project.", a:"draw"},
+  {p:"Утвердительные", s:"Our dog always ________ (play) near the sofa.", a:"plays"},
+  {p:"Утвердительные", s:"Anna and Lucy always ________ (look) at a photo.", a:"look"},
+  {p:"Утвердительные", s:"You usually ________ (get) some water.", a:"get"},
+  {p:"Утвердительные", s:"The students rarely ________ (drink) milk in the morning.", a:"drink"},
+  {p:"Утвердительные", s:"You often ________ (open) a lunch box.", a:"open"},
+  {p:"Утвердительные", s:"Tom and Ben always ________ (get) ready for school.", a:"get"},
+  {p:"Утвердительные", s:"My best friend ________ (swim) in the lake at the moment.", a:"is swimming"},
+  {p:"Утвердительные", s:"You ________ (talk) about a new game at the moment.", a:"are talking"},
+  {p:"Утвердительные", s:"We usually ________ (cook) vegetable soup.", a:"cook"},
+  {p:"Утвердительные", s:"The students always ________ (work) at the computer.", a:"work"},
+  {p:"Утвердительные", s:"My best friend ________ (listen) to music in the bedroom before dinner.", a:"listens"},
+  {p:"Утвердительные", s:"Our neighbours ________ (study) maths with a classmate at the moment.", a:"are studying"},
+  {p:"Утвердительные", s:"We ________ (watch) a funny video at weekends.", a:"watch"},
+  {p:"Утвердительные", s:"The children ________ (build) a robot for the project once a week.", a:"build"},
+  {p:"Утвердительные", s:"Ben often ________ (go) to the library.", a:"goes"},
+  {p:"Утвердительные", s:"Tom and Ben always ________ (wash) a T-shirt.", a:"wash"},
+  {p:"Утвердительные", s:"Tom and Ben rarely ________ (sit) near the window.", a:"sit"},
+  {p:"Утвердительные", s:"The cat ________ (watch) a fly on the wall now.", a:"is watching"},
+  {p:"Утвердительные", s:"Tom ________ (read) comics in the bedroom every morning.", a:"reads"},
+  {p:"Утвердительные", s:"My brother ________ (do) the washing-up after dinner in the summer.", a:"does"},
+  {p:"Утвердительные", s:"My best friend rarely ________ (walk) to school.", a:"walks"},
+  {p:"Утвердительные", s:"We ________ (visit) grandparents every Friday.", a:"visit"},
+  {p:"Утвердительные", s:"Anna ________ (answer) an email now.", a:"is answering"},
+  {p:"Утвердительные", s:"Anna ________ (sing) a new song at weekends.", a:"sings"},
+  {p:"Утвердительные", s:"Lucy rarely ________ (wait) for the school bus.", a:"waits"},
+  {p:"Утвердительные", s:"You rarely ________ (draw) a funny cartoon.", a:"draw"},
+  {p:"Утвердительные", s:"Our dog ________ (drink) a little water now.", a:"is drinking"},
+  {p:"Утвердительные", s:"She usually ________ (feed) the rabbits at the farm.", a:"feeds"},
+  {p:"Утвердительные", s:"My friends ________ (use) a tablet at school right now.", a:"are using"},
+  {p:"Утвердительные", s:"My brother ________ (brush) teeth before bed now.", a:"is brushing"},
+  {p:"Утвердительные", s:"Ben ________ (wait) for the lesson to begin right now.", a:"is waiting"},
+  {p:"Утвердительные", s:"I ________ (get) up early now.", a:"am getting"},
+  {p:"Утвердительные", s:"We ________ (swim) with the class now.", a:"are swimming"},
+  {p:"Утвердительные", s:"Tom usually ________ (drink) milk in the morning.", a:"drinks"},
+  {p:"Утвердительные", s:"Ben ________ (take) an umbrella now.", a:"is taking"},
+  {p:"Утвердительные", s:"Ben often ________ (carry) sports clothes.", a:"carries"},
+  {p:"Утвердительные", s:"Our teacher ________ (open) the school book now.", a:"is opening"},
+  {p:"Утвердительные", s:"The cat ________ (sit) under the chair on Mondays.", a:"sits"},
+  {p:"Утвердительные", s:"My sister ________ (close) the bedroom door right now.", a:"is closing"},
+  {p:"Утвердительные", s:"My best friend always ________ (wear) a warm hat.", a:"wears"},
+  {p:"Утвердительные", s:"The new student always ________ (swim) in the school pool.", a:"swims"},
+  {p:"Утвердительные", s:"My best friend ________ (carry) some books once a week.", a:"carries"},
+  {p:"Утвердительные", s:"My best friend ________ (play) basketball after school at the moment.", a:"is playing"},
+  {p:"Утвердительные", s:"My parents ________ (have) lunch at school now.", a:"are having"},
+  {p:"Утвердительные", s:"You ________ (study) maths with a classmate now.", a:"are studying"},
+  {p:"Утвердительные", s:"Anna and Lucy ________ (take) an umbrella now.", a:"are taking"},
+  {p:"Утвердительные", s:"The new student usually ________ (practise) a new dance.", a:"practises"},
+  {p:"Утвердительные", s:"The children ________ (shop) for new school clothes every day.", a:"shop"},
+  {p:"Утвердительные", s:"My brother often ________ (use) a camera.", a:"uses"},
+  {p:"Утвердительные", s:"She ________ (cook) pasta in the kitchen every morning.", a:"cooks"},
+  {p:"Утвердительные", s:"The cat ________ (wait) by the front door in the evening.", a:"waits"},
+  {p:"Утвердительные", s:"The children ________ (help) the teacher after class before dinner.", a:"help"},
+  {p:"Утвердительные", s:"You rarely ________ (close) the cupboard.", a:"close"},
+  {p:"Утвердительные", s:"Our neighbours ________ (eat) a sandwich at weekends.", a:"eat"},
+  {p:"Утвердительные", s:"My parents ________ (paint) a small wooden box now.", a:"are painting"},
+  {p:"Утвердительные", s:"They ________ (do) a maths exercise at the moment.", a:"are doing"},
+  {p:"Утвердительные", s:"The students usually ________ (carry) a heavy school bag.", a:"carry"},
+  {p:"Утвердительные", s:"We ________ (clean) the classroom at the moment.", a:"are cleaning"},
+  {p:"Утвердительные", s:"They ________ (carry) a box to the classroom now.", a:"are carrying"},
+  {p:"Утвердительные", s:"Our teacher ________ (carry) sports clothes every Friday.", a:"carries"},
+  {p:"Утвердительные", s:"He rarely ________ (eat) lunch at school.", a:"eats"},
+  {p:"Утвердительные", s:"She ________ (close) the cupboard at the moment.", a:"is closing"},
+  {p:"Утвердительные", s:"The students usually ________ (feed) the fish.", a:"feed"},
+  {p:"Утвердительные", s:"Our teacher always ________ (look) at the homework.", a:"looks"},
+  {p:"Утвердительные", s:"The children ________ (drink) water after sport now.", a:"are drinking"},
+  {p:"Утвердительные", s:"She ________ (work) on a difficult exercise now.", a:"is working"},
+  {p:"Утвердительные", s:"The new student ________ (sit) near the window now.", a:"is sitting"},
+  {p:"Утвердительные", s:"Anna and Lucy ________ (have) a short break now.", a:"are having"},
+  {p:"Утвердительные", s:"My brother ________ (learn) ten new English words now.", a:"is learning"},
+  {p:"Утвердительные", s:"Our dog ________ (eat) very slowly at the moment.", a:"is eating"},
+  {p:"Утвердительные", s:"She ________ (visit) an aunt now.", a:"is visiting"},
+  {p:"Утвердительные", s:"He ________ (ride) a horse at the farm every Friday.", a:"rides"},
+  {p:"Утвердительные", s:"The cat rarely ________ (play) in the garden.", a:"plays"},
+  {p:"Утвердительные", s:"Anna and Lucy ________ (listen) to music in the bedroom right now.", a:"are listening"},
+  {p:"Утвердительные", s:"My best friend ________ (work) on a difficult exercise at the moment.", a:"is working"},
+  {p:"Утвердительные", s:"Anna and Lucy ________ (get) a book from the shelf now.", a:"are getting"},
+  {p:"Утвердительные", s:"I ________ (sleep) for eight hours right now.", a:"am sleeping"},
+  {p:"Утвердительные", s:"My cat always ________ (watch) the open door.", a:"watches"},
+  {p:"Утвердительные", s:"Tom and Ben ________ (listen) to music in the bedroom now.", a:"are listening"},
+  {p:"Утвердительные", s:"My brother sometimes ________ (answer) questions about the text.", a:"answers"},
+  {p:"Утвердительные", s:"They rarely ________ (play) football in the park.", a:"play"},
+  {p:"Утвердительные", s:"Our neighbours ________ (ride) a horse at the farm before dinner.", a:"ride"},
+  {p:"Утвердительные", s:"The students ________ (practise) English pronunciation now.", a:"are practising"},
+  {p:"Утвердительные", s:"My brother ________ (sing) with the music teacher now.", a:"is singing"},
+  {p:"Утвердительные", s:"Anna ________ (swim) with the class now.", a:"is swimming"},
+  {p:"Утвердительные", s:"The cat ________ (sit) on the floor before dinner.", a:"sits"},
+  {p:"Утвердительные", s:"The children ________ (practise) the piano at the moment.", a:"are practising"},
+  {p:"Утвердительные", s:"My cat sometimes ________ (wait) near the gate.", a:"waits"},
+  {p:"Утвердительные", s:"My parents sometimes ________ (have) a short break.", a:"have"},
+  {p:"Утвердительные", s:"Our dog ________ (drink) near the door at the moment.", a:"is drinking"},
+  {p:"Утвердительные", s:"My cat rarely ________ (drink) near the door.", a:"drinks"},
+  {p:"Утвердительные", s:"The children ________ (listen) to a new song now.", a:"are listening"},
+  {p:"Утвердительные", s:"The new student ________ (cook) pasta in the kitchen right now.", a:"is cooking"},
+  {p:"Утвердительные", s:"My best friend ________ (visit) the local library on Mondays.", a:"visits"},
+  {p:"Утвердительные", s:"My best friend always ________ (walk) along the river.", a:"walks"},
+  {p:"Утвердительные", s:"Tom and Ben ________ (sit) next to a friend now.", a:"are sitting"},
+  {p:"Утвердительные", s:"The students ________ (drink) water after sport now.", a:"are drinking"},
+  {p:"Утвердительные", s:"We ________ (wash) a T-shirt at weekends.", a:"wash"},
+  {p:"Утвердительные", s:"Lucy usually ________ (sleep) in a small room.", a:"sleeps"},
+  {p:"Утвердительные", s:"The children ________ (answer) the last exercise right now.", a:"are answering"},
+  {p:"Утвердительные", s:"My friends ________ (talk) about a new game on school days.", a:"talk"},
+  {p:"Утвердительные", s:"The dog ________ (run) around the garden once a week.", a:"runs"},
+  {p:"Утвердительные", s:"My best friend often ________ (take) an umbrella.", a:"takes"},
+  {p:"Утвердительные", s:"My best friend ________ (watch) a funny video now.", a:"is watching"},
+  {p:"Утвердительные", s:"Anna sometimes ________ (open) a lunch box.", a:"opens"},
+  {p:"Утвердительные", s:"The students ________ (sit) on a bench now.", a:"are sitting"},
+  {p:"Утвердительные", s:"Our dog ________ (sleep) on the sofa right now.", a:"is sleeping"},
+  {p:"Утвердительные", s:"They ________ (carry) some books right now.", a:"are carrying"},
+  {p:"Утвердительные", s:"My friends usually ________ (build) a robot for the project.", a:"build"},
+  {p:"Утвердительные", s:"She ________ (prepare) a school presentation right now.", a:"is preparing"},
+  {p:"Утвердительные", s:"Anna and Lucy always ________ (answer) the phone.", a:"answer"},
+  {p:"Утвердительные", s:"I ________ (sit) next to a friend after school.", a:"sit"},
+  {p:"Утвердительные", s:"The cat ________ (play) with a ball right now.", a:"is playing"},
+  {p:"Утвердительные", s:"Tom and Ben ________ (read) an interesting story right now.", a:"are reading"},
+  {p:"Утвердительные", s:"Anna and Lucy rarely ________ (open) the classroom window.", a:"open"},
+  {p:"Утвердительные", s:"We ________ (walk) home from the bus stop at the moment.", a:"are walking"},
+  {p:"Утвердительные", s:"Our neighbours ________ (clean) the bike at the moment.", a:"are cleaning"},
+  {p:"Утвердительные", s:"The children ________ (make) a paper plane right now.", a:"are making"},
+  {p:"Утвердительные", s:"My sister ________ (shop) for food with the family right now.", a:"is shopping"},
+  {p:"Утвердительные", s:"The new student rarely ________ (make) a sandwich for lunch.", a:"makes"},
+  {p:"Утвердительные", s:"Anna and Lucy ________ (stand) by the window now.", a:"are standing"},
+  {p:"Утвердительные", s:"I ________ (have) a short break now.", a:"am having"},
+  {p:"Утвердительные", s:"Lucy ________ (sing) a new song right now.", a:"is singing"},
+  {p:"Утвердительные", s:"The children rarely ________ (write) an email to a friend.", a:"write"},
+  {p:"Утвердительные", s:"Lucy always ________ (learn) a new song.", a:"learns"},
+  {p:"Утвердительные", s:"My brother rarely ________ (come) to the sports club.", a:"comes"},
+  {p:"Утвердительные", s:"The students ________ (run) very quickly now.", a:"are running"},
+  {p:"Утвердительные", s:"My brother sometimes ________ (drink) milk in the morning.", a:"drinks"},
+  {p:"Утвердительные", s:"Anna ________ (have) lunch at school now.", a:"is having"},
+  {p:"Утвердительные", s:"My best friend ________ (work) on a school project once a week.", a:"works"},
+  {p:"Утвердительные", s:"We ________ (dance) on the stage now.", a:"are dancing"},
+  {p:"Утвердительные", s:"The new student ________ (wear) a green T-shirt now.", a:"is wearing"},
+  {p:"Утвердительные", s:"Our neighbours ________ (stand) at the bus stop right now.", a:"are standing"},
+  {p:"Утвердительные", s:"The dog ________ (eat) from a small bowl at the moment.", a:"is eating"},
+  {p:"Утвердительные", s:"The children ________ (come) home at five o’clock now.", a:"are coming"},
+  {p:"Утвердительные", s:"My parents ________ (carry) sports clothes before dinner.", a:"carry"},
+  {p:"Утвердительные", s:"He ________ (draw) a map for the project right now.", a:"is drawing"},
+  {p:"Утвердительные", s:"She often ________ (help) parents in the kitchen.", a:"helps"},
+  {p:"Утвердительные", s:"My brother ________ (ride) a bike to school now.", a:"is riding"},
+  {p:"Утвердительные", s:"She rarely ________ (go) home after class.", a:"goes"},
+  {p:"Утвердительные", s:"Tom ________ (prepare) the classroom for the lesson right now.", a:"is preparing"},
+  {p:"Утвердительные", s:"Anna and Lucy rarely ________ (run) in the school race.", a:"run"},
+  {p:"Утвердительные", s:"My friends sometimes ________ (wait) for the school bus.", a:"wait"},
+  {p:"Утвердительные", s:"The dog ________ (run) around the garden now.", a:"is running"},
+  {p:"Утвердительные", s:"Lucy always ________ (draw) a tree and some flowers.", a:"draws"},
+  {p:"Утвердительные", s:"Anna and Lucy ________ (answer) the last exercise twice a month.", a:"answer"},
+  {p:"Утвердительные", s:"My brother ________ (ride) a new bicycle at the moment.", a:"is riding"},
+  {p:"Утвердительные", s:"Our teacher ________ (use) a ruler in maths class right now.", a:"is using"},
+  {p:"Утвердительные", s:"The new student sometimes ________ (sing) in the school choir.", a:"sings"},
+  {p:"Утвердительные", s:"Tom and Ben always ________ (brush) teeth before bed.", a:"brush"},
+  {p:"Утвердительные", s:"I ________ (go) to school by bus once a week.", a:"go"},
+  {p:"Утвердительные", s:"The new student often ________ (brush) teeth after breakfast.", a:"brushes"},
+  {p:"Утвердительные", s:"Tom and Ben ________ (stand) near the board now.", a:"are standing"},
+  {p:"Утвердительные", s:"My friends ________ (walk) to school right now.", a:"are walking"},
+  {p:"Утвердительные", s:"The dog ________ (eat) its food at the moment.", a:"is eating"},
+  {p:"Утвердительные", s:"He ________ (practise) English pronunciation now.", a:"is practising"},
+  {p:"Утвердительные", s:"Our teacher always ________ (cook) dinner for the family.", a:"cooks"},
+  {p:"Утвердительные", s:"She sometimes ________ (study) the map of Europe.", a:"studies"},
+  {p:"Утвердительные", s:"My friends ________ (practise) spelling words right now.", a:"are practising"},
+  {p:"Утвердительные", s:"Our dog always ________ (wait) under the table.", a:"waits"},
+  {p:"Утвердительные", s:"The new student ________ (play) chess with a friend on school days.", a:"plays"},
+  {p:"Утвердительные", s:"Our dog rarely ________ (play) in the garden.", a:"plays"},
+  {p:"Утвердительные", s:"Lucy ________ (close) the window right now.", a:"is closing"},
+  {p:"Утвердительные", s:"My cat ________ (watch) the birds outside on school days.", a:"watches"},
+  {p:"Утвердительные", s:"My cat ________ (wait) for its food every morning.", a:"waits"},
+  {p:"Утвердительные", s:"My brother ________ (watch) a football match right now.", a:"is watching"},
+  {p:"Утвердительные", s:"She rarely ________ (brush) the dog’s fur.", a:"brushes"},
+  {p:"Утвердительные", s:"Anna and Lucy ________ (write) a postcard at the moment.", a:"are writing"},
+  {p:"Отрицательные", s:"My best friend ________ (not / draw) a tree and some flowers once a week.", a:"does not draw"},
+  {p:"Отрицательные", s:"Lucy ________ (not / listen) to the teacher carefully once a week.", a:"does not listen"},
+  {p:"Отрицательные", s:"Anna and Lucy ________ (not / make) a cup of tea every day.", a:"do not make"},
+  {p:"Отрицательные", s:"She ________ (not / draw) a picture of a house now.", a:"is not drawing"},
+  {p:"Отрицательные", s:"Tom ________ (not / sing) at the concert at the moment.", a:"is not singing"},
+  {p:"Отрицательные", s:"Our dog ________ (not / play) with a toy in the evening.", a:"does not play"},
+  {p:"Отрицательные", s:"Tom and Ben ________ (not / draw) a funny cartoon in the evening.", a:"do not draw"},
+  {p:"Отрицательные", s:"The students ________ (not / read) comics in the bedroom before dinner.", a:"do not read"},
+  {p:"Отрицательные", s:"My brother ________ (not / prepare) lunch every day.", a:"does not prepare"},
+  {p:"Отрицательные", s:"They ________ (not / get) a book from the shelf at the moment.", a:"are not getting"},
+  {p:"Отрицательные", s:"The children ________ (not / take) notes in the lesson right now.", a:"are not taking"},
+  {p:"Отрицательные", s:"Our dog ________ (not / run) towards the door now.", a:"is not running"},
+  {p:"Отрицательные", s:"My parents ________ (not / look) at the homework after school.", a:"do not look"},
+  {p:"Отрицательные", s:"We ________ (not / feed) the birds in the garden right now.", a:"are not feeding"},
+  {p:"Отрицательные", s:"Ben ________ (not / feed) the rabbits at the farm at the moment.", a:"is not feeding"},
+  {p:"Отрицательные", s:"Our teacher ________ (not / talk) to the teacher right now.", a:"is not talking"},
+  {p:"Отрицательные", s:"Our teacher ________ (not / wear) school uniform right now.", a:"is not wearing"},
+  {p:"Отрицательные", s:"My parents ________ (not / use) a camera before dinner.", a:"do not use"},
+  {p:"Отрицательные", s:"My friends ________ (not / make) a sandwich for lunch twice a month.", a:"do not make"},
+  {p:"Отрицательные", s:"You ________ (not / use) a ruler in maths class after school.", a:"do not use"},
+  {p:"Отрицательные", s:"Our teacher ________ (not / run) around the playground right now.", a:"is not running"},
+  {p:"Отрицательные", s:"My brother ________ (not / watch) a football match every Friday.", a:"does not watch"},
+  {p:"Отрицательные", s:"Tom ________ (not / feed) the rabbits at the farm now.", a:"is not feeding"},
+  {p:"Отрицательные", s:"My cat ________ (not / drink) after a walk on school days.", a:"does not drink"},
+  {p:"Отрицательные", s:"Tom ________ (not / have) lunch at school at the moment.", a:"is not having"},
+  {p:"Отрицательные", s:"The students ________ (not / do) a school project after school.", a:"do not do"},
+  {p:"Отрицательные", s:"My friends ________ (not / make) a sandwich for lunch every morning.", a:"do not make"},
+  {p:"Отрицательные", s:"Tom ________ (not / work) on a difficult exercise every morning.", a:"does not work"},
+  {p:"Отрицательные", s:"My parents ________ (not / paint) the garden fence right now.", a:"are not painting"},
+  {p:"Отрицательные", s:"Lucy ________ (not / brush) the dog’s fur before dinner.", a:"does not brush"},
+  {p:"Отрицательные", s:"I ________ (not / take) a photo of the class on Mondays.", a:"do not take"},
+  {p:"Отрицательные", s:"Ben ________ (not / wash) the dishes at the moment.", a:"is not washing"},
+  {p:"Отрицательные", s:"My cat ________ (not / watch) a fly on the wall right now.", a:"is not watching"},
+  {p:"Отрицательные", s:"My brother ________ (not / build) a model house on school days.", a:"does not build"},
+  {p:"Отрицательные", s:"Lucy ________ (not / go) to bed early now.", a:"is not going"},
+  {p:"Отрицательные", s:"The students ________ (not / help) parents in the kitchen once a week.", a:"do not help"},
+  {p:"Отрицательные", s:"My cat ________ (not / sleep) on the sofa right now.", a:"is not sleeping"},
+  {p:"Отрицательные", s:"My parents ________ (not / read) comics in the bedroom now.", a:"are not reading"},
+  {p:"Отрицательные", s:"Lucy ________ (not / watch) the birds in the garden right now.", a:"is not watching"},
+  {p:"Отрицательные", s:"Ben ________ (not / talk) about a new game now.", a:"is not talking"},
+  {p:"Отрицательные", s:"Tom ________ (not / talk) about the school trip right now.", a:"is not talking"},
+  {p:"Отрицательные", s:"I ________ (not / work) on a school project at the moment.", a:"am not working"},
+  {p:"Отрицательные", s:"The cat ________ (not / sit) on the floor now.", a:"is not sitting"},
+  {p:"Отрицательные", s:"My sister ________ (not / drink) milk in the morning now.", a:"is not drinking"},
+  {p:"Отрицательные", s:"The new student ________ (not / clean) the kitchen table at the moment.", a:"is not cleaning"},
+  {p:"Отрицательные", s:"My parents ________ (not / read) an interesting story on Mondays.", a:"do not read"},
+  {p:"Отрицательные", s:"We ________ (not / work) on a difficult exercise at weekends.", a:"do not work"},
+  {p:"Отрицательные", s:"My best friend ________ (not / visit) a friend after school at weekends.", a:"does not visit"},
+  {p:"Отрицательные", s:"My cat ________ (not / play) near the sofa in the evening.", a:"does not play"},
+  {p:"Отрицательные", s:"Tom and Ben ________ (not / sleep) in a small room at the moment.", a:"are not sleeping"},
+  {p:"Отрицательные", s:"My cat ________ (not / sleep) near the window on school days.", a:"does not sleep"},
+  {p:"Отрицательные", s:"The dog ________ (not / run) around the garden now.", a:"is not running"},
+  {p:"Отрицательные", s:"The new student ________ (not / watch) the birds in the garden twice a month.", a:"does not watch"},
+  {p:"Отрицательные", s:"The students ________ (not / come) back from school every day.", a:"do not come"},
+  {p:"Отрицательные", s:"I ________ (not / stand) by the window now.", a:"am not standing"},
+  {p:"Отрицательные", s:"The children ________ (not / stand) in front of the class every morning.", a:"do not stand"},
+  {p:"Отрицательные", s:"Tom ________ (not / play) the guitar in the music room in the summer.", a:"does not play"},
+  {p:"Отрицательные", s:"My best friend ________ (not / wait) near the school gate now.", a:"is not waiting"},
+  {p:"Отрицательные", s:"Lucy ________ (not / close) the window at weekends.", a:"does not close"},
+  {p:"Отрицательные", s:"The new student ________ (not / learn) ten new English words every day.", a:"does not learn"},
+  {p:"Отрицательные", s:"I ________ (not / take) the dog for a walk before dinner.", a:"do not take"},
+  {p:"Отрицательные", s:"The new student ________ (not / practise) the piano every Friday.", a:"does not practise"},
+  {p:"Отрицательные", s:"The cat ________ (not / eat) from a small bowl right now.", a:"is not eating"},
+  {p:"Отрицательные", s:"Lucy ________ (not / wear) school uniform at weekends.", a:"does not wear"},
+  {p:"Отрицательные", s:"Our dog ________ (not / sleep) near the window at the moment.", a:"is not sleeping"},
+  {p:"Отрицательные", s:"The new student ________ (not / shop) in the town centre at the moment.", a:"is not shopping"},
+  {p:"Отрицательные", s:"My brother ________ (not / drink) water after sport every day.", a:"does not drink"},
+  {p:"Отрицательные", s:"The cat ________ (not / eat) from a small bowl at the moment.", a:"is not eating"},
+  {p:"Отрицательные", s:"My friends ________ (not / use) a ruler in maths class on Mondays.", a:"do not use"},
+  {p:"Отрицательные", s:"She ________ (not / drink) orange juice now.", a:"is not drinking"},
+  {p:"Отрицательные", s:"The dog ________ (not / watch) the children right now.", a:"is not watching"},
+  {p:"Отрицательные", s:"Lucy ________ (not / answer) questions about the text in the evening.", a:"does not answer"},
+  {p:"Отрицательные", s:"We ________ (not / study) new words at weekends.", a:"do not study"},
+  {p:"Отрицательные", s:"My sister ________ (not / drink) milk in the morning before dinner.", a:"does not drink"},
+  {p:"Отрицательные", s:"My parents ________ (not / come) to the sports club every Friday.", a:"do not come"},
+  {p:"Отрицательные", s:"My best friend ________ (not / build) a model bridge every morning.", a:"does not build"},
+  {p:"Отрицательные", s:"Ben ________ (not / go) home after class now.", a:"is not going"},
+  {p:"Отрицательные", s:"Anna ________ (not / visit) grandparents on Mondays.", a:"does not visit"},
+  {p:"Отрицательные", s:"Our teacher ________ (not / watch) TV in the living room after school.", a:"does not watch"},
+  {p:"Отрицательные", s:"My best friend ________ (not / wash) the dishes at the moment.", a:"is not washing"},
+  {p:"Отрицательные", s:"My sister ________ (not / drink) orange juice at the moment.", a:"is not drinking"},
+  {p:"Отрицательные", s:"We ________ (not / talk) about a new game every morning.", a:"do not talk"},
+  {p:"Отрицательные", s:"Tom ________ (not / stand) outside the shop every morning.", a:"does not stand"},
+  {p:"Отрицательные", s:"Anna and Lucy ________ (not / walk) to school at the moment.", a:"are not walking"},
+  {p:"Отрицательные", s:"Our neighbours ________ (not / close) the school gate once a week.", a:"do not close"},
+  {p:"Отрицательные", s:"She ________ (not / make) a small gift now.", a:"is not making"},
+  {p:"Отрицательные", s:"I ________ (not / wait) for the school bus now.", a:"am not waiting"},
+  {p:"Отрицательные", s:"My sister ________ (not / come) to the classroom right now.", a:"is not coming"},
+  {p:"Отрицательные", s:"Our dog ________ (not / sit) near its bowl right now.", a:"is not sitting"},
+  {p:"Отрицательные", s:"My best friend ________ (not / help) parents in the kitchen at the moment.", a:"is not helping"},
+  {p:"Отрицательные", s:"My brother ________ (not / come) to the classroom at the moment.", a:"is not coming"},
+  {p:"Отрицательные", s:"The children ________ (not / work) on a school project at weekends.", a:"do not work"},
+  {p:"Отрицательные", s:"The children ________ (not / sleep) with the window open at the moment.", a:"are not sleeping"},
+  {p:"Отрицательные", s:"You ________ (not / stand) by the window once a week.", a:"do not stand"},
+  {p:"Отрицательные", s:"She ________ (not / play) football in the park in the evening.", a:"does not play"},
+  {p:"Отрицательные", s:"The new student ________ (not / go) to the library at the moment.", a:"is not going"},
+  {p:"Отрицательные", s:"My brother ________ (not / wear) new trainers now.", a:"is not wearing"},
+  {p:"Отрицательные", s:"My friends ________ (not / sleep) for eight hours at the moment.", a:"are not sleeping"},
+  {p:"Отрицательные", s:"My parents ________ (not / cook) pasta in the kitchen every Friday.", a:"do not cook"},
+  {p:"Отрицательные", s:"We ________ (not / play) basketball after school at the moment.", a:"are not playing"},
+  {p:"Отрицательные", s:"He ________ (not / read) comics in the bedroom on school days.", a:"does not read"},
+  {p:"Отрицательные", s:"Our neighbours ________ (not / take) a photo of the class twice a month.", a:"do not take"},
+  {p:"Отрицательные", s:"He ________ (not / sleep) in a small room after school.", a:"does not sleep"},
+  {p:"Отрицательные", s:"Our dog ________ (not / watch) people in the street on Mondays.", a:"does not watch"},
+  {p:"Отрицательные", s:"You ________ (not / help) a classmate with homework after school.", a:"do not help"},
+  {p:"Отрицательные", s:"The new student ________ (not / wash) hands before lunch once a week.", a:"does not wash"},
+  {p:"Отрицательные", s:"You ________ (not / write) a postcard at weekends.", a:"do not write"},
+  {p:"Отрицательные", s:"My sister ________ (not / prepare) a bag for the trip at the moment.", a:"is not preparing"},
+  {p:"Отрицательные", s:"My cat ________ (not / sleep) on the sofa at weekends.", a:"does not sleep"},
+  {p:"Отрицательные", s:"My best friend ________ (not / open) the front door now.", a:"is not opening"},
+  {p:"Отрицательные", s:"Ben ________ (not / shop) for food with the family right now.", a:"is not shopping"},
+  {p:"Отрицательные", s:"Lucy ________ (not / drink) tea with breakfast now.", a:"is not drinking"},
+  {p:"Отрицательные", s:"The new student ________ (not / make) a cup of tea in the evening.", a:"does not make"},
+  {p:"Отрицательные", s:"Tom and Ben ________ (not / shop) in the town centre at the moment.", a:"are not shopping"},
+  {p:"Отрицательные", s:"Our teacher ________ (not / answer) the last exercise twice a month.", a:"does not answer"},
+  {p:"Отрицательные", s:"My brother ________ (not / get) dressed for the party at the moment.", a:"is not getting"},
+  {p:"Отрицательные", s:"The cat ________ (not / watch) the children at the moment.", a:"is not watching"},
+  {p:"Отрицательные", s:"The new student ________ (not / answer) an email in the evening.", a:"does not answer"},
+  {p:"Отрицательные", s:"My friends ________ (not / dance) at the school concert right now.", a:"are not dancing"},
+  {p:"Отрицательные", s:"You ________ (not / prepare) lunch in the summer.", a:"do not prepare"},
+  {p:"Отрицательные", s:"Anna ________ (not / read) a science article now.", a:"is not reading"},
+  {p:"Отрицательные", s:"The new student ________ (not / carry) some books on Mondays.", a:"does not carry"},
+  {p:"Отрицательные", s:"He ________ (not / watch) the birds in the garden in the evening.", a:"does not watch"},
+  {p:"Отрицательные", s:"The dog ________ (not / run) across the room at the moment.", a:"is not running"},
+  {p:"Отрицательные", s:"Tom ________ (not / shop) for food with the family right now.", a:"is not shopping"},
+  {p:"Отрицательные", s:"Tom ________ (not / do) a school project now.", a:"is not doing"},
+  {p:"Отрицательные", s:"The new student ________ (not / come) to the sports club at the moment.", a:"is not coming"},
+  {p:"Отрицательные", s:"Our neighbours ________ (not / play) football in the park every Friday.", a:"do not play"},
+  {p:"Отрицательные", s:"Anna and Lucy ________ (not / have) a music lesson right now.", a:"are not having"},
+  {p:"Отрицательные", s:"I ________ (not / paint) a picture in art class every day.", a:"do not paint"},
+  {p:"Отрицательные", s:"My best friend ________ (not / paint) a picture in art class now.", a:"is not painting"},
+  {p:"Отрицательные", s:"My cat ________ (not / wait) near the gate right now.", a:"is not waiting"},
+  {p:"Отрицательные", s:"My friends ________ (not / sleep) with the window open on Mondays.", a:"do not sleep"},
+  {p:"Отрицательные", s:"The children ________ (not / wait) for the lesson to begin at weekends.", a:"do not wait"},
+  {p:"Отрицательные", s:"My brother ________ (not / eat) an apple at break time every day.", a:"does not eat"},
+  {p:"Отрицательные", s:"He ________ (not / run) in the school race now.", a:"is not running"},
+  {p:"Отрицательные", s:"Anna and Lucy ________ (not / practise) basketball right now.", a:"are not practising"},
+  {p:"Отрицательные", s:"Anna and Lucy ________ (not / eat) breakfast in the kitchen every day.", a:"do not eat"},
+  {p:"Отрицательные", s:"My friends ________ (not / come) to the classroom every day.", a:"do not come"},
+  {p:"Отрицательные", s:"I ________ (not / carry) an umbrella after school.", a:"do not carry"},
+  {p:"Отрицательные", s:"My brother ________ (not / come) to the sports club at the moment.", a:"is not coming"},
+  {p:"Отрицательные", s:"They ________ (not / get) ready for school right now.", a:"are not getting"},
+  {p:"Отрицательные", s:"My friends ________ (not / sleep) on the sofa at the moment.", a:"are not sleeping"},
+  {p:"Отрицательные", s:"The children ________ (not / swim) in the school pool right now.", a:"are not swimming"},
+  {p:"Отрицательные", s:"The dog ________ (not / sleep) near the window at weekends.", a:"does not sleep"},
+  {p:"Отрицательные", s:"My sister ________ (not / dance) with friends at the moment.", a:"is not dancing"},
+  {p:"Отрицательные", s:"My brother ________ (not / wear) a green T-shirt right now.", a:"is not wearing"},
+  {p:"Отрицательные", s:"Our dog ________ (not / play) in the garden at weekends.", a:"does not play"},
+  {p:"Отрицательные", s:"Our dog ________ (not / run) very fast at the moment.", a:"is not running"},
+  {p:"Отрицательные", s:"My parents ________ (not / walk) along the river twice a month.", a:"do not walk"},
+  {p:"Вопросы", s:"________ (Ben / listen) to a new song at the moment?", a:"Is Ben listening"},
+  {p:"Вопросы", s:"________ (our dog / sit) on the floor at the moment?", a:"Is our dog sitting"},
+  {p:"Вопросы", s:"________ (you / watch) a film with the family right now?", a:"Are you watching"},
+  {p:"Вопросы", s:"________ (Ben / carry) sports clothes at the moment?", a:"Is Ben carrying"},
+  {p:"Вопросы", s:"________ (my brother / feed) the rabbits at the farm every morning?", a:"Does my brother feed"},
+  {p:"Вопросы", s:"________ (they / run) in the school race on Mondays?", a:"Do they run"},
+  {p:"Вопросы", s:"________ (my sister / work) with a partner once a week?", a:"Does my sister work"},
+  {p:"Вопросы", s:"________ (they / ride) a bike to school every morning?", a:"Do they ride"},
+  {p:"Вопросы", s:"________ (my best friend / sit) near the window now?", a:"Is my best friend sitting"},
+  {p:"Вопросы", s:"________ (my brother / wait) for a friend outside in the summer?", a:"Does my brother wait"},
+  {p:"Вопросы", s:"________ (my parents / sit) at the kitchen table in the evening?", a:"Do my parents sit"},
+  {p:"Вопросы", s:"________ (you / stand) near the board every day?", a:"Do you stand"},
+  {p:"Вопросы", s:"________ (my best friend / go) to the sports club every Friday?", a:"Does my best friend go"},
+  {p:"Вопросы", s:"________ (our neighbours / run) in the school race in the summer?", a:"Do our neighbours run"},
+  {p:"Вопросы", s:"________ (you / walk) in the park at weekends?", a:"Do you walk"},
+  {p:"Вопросы", s:"________ (he / get) up early now?", a:"Is he getting"},
+  {p:"Вопросы", s:"________ (our neighbours / eat) lunch at school every Friday?", a:"Do our neighbours eat"},
+  {p:"Вопросы", s:"________ (my friends / play) the guitar in the music room right now?", a:"Are my friends playing"},
+  {p:"Вопросы", s:"________ (the dog / run) towards the door right now?", a:"Is the dog running"},
+  {p:"Вопросы", s:"________ (Lucy / talk) to a friend on the phone on school days?", a:"Does Lucy talk"},
+  {p:"Вопросы", s:"________ (my sister / have) breakfast with the family right now?", a:"Is my sister having"},
+  {p:"Вопросы", s:"________ (my best friend / wash) a T-shirt at weekends?", a:"Does my best friend wash"},
+  {p:"Вопросы", s:"________ (Anna / close) the notebook right now?", a:"Is Anna closing"},
+  {p:"Вопросы", s:"________ (my cat / play) with a toy right now?", a:"Is my cat playing"},
+  {p:"Вопросы", s:"________ (my friends / go) to the library at weekends?", a:"Do my friends go"},
+  {p:"Вопросы", s:"________ (they / play) a board game with the family now?", a:"Are they playing"},
+  {p:"Вопросы", s:"________ (my sister / read) comics in the bedroom once a week?", a:"Does my sister read"},
+  {p:"Вопросы", s:"________ (Lucy / sit) next to a friend at the moment?", a:"Is Lucy sitting"},
+  {p:"Вопросы", s:"________ (my brother / help) a classmate with homework in the evening?", a:"Does my brother help"},
+  {p:"Вопросы", s:"________ (he / sleep) in a small room right now?", a:"Is he sleeping"},
+  {p:"Вопросы", s:"________ (he / come) to the classroom at weekends?", a:"Does he come"},
+  {p:"Вопросы", s:"________ (Ben / take) an umbrella every morning?", a:"Does Ben take"},
+  {p:"Вопросы", s:"________ (the students / play) the guitar in the music room at the moment?", a:"Are the students playing"},
+  {p:"Вопросы", s:"________ (I / paint) a picture in art class before dinner?", a:"Do I paint"},
+  {p:"Вопросы", s:"________ (I / take) the bus to school now?", a:"Am I taking"},
+  {p:"Вопросы", s:"________ (Tom and Ben / shop) for new school clothes now?", a:"Are Tom and Ben shopping"},
+  {p:"Вопросы", s:"________ (he / ride) a bike to school once a week?", a:"Does he ride"},
+  {p:"Вопросы", s:"________ (my parents / listen) to the teacher carefully every day?", a:"Do my parents listen"},
+  {p:"Вопросы", s:"________ (the dog / drink) a little water on Mondays?", a:"Does the dog drink"},
+  {p:"Вопросы", s:"________ (she / drink) orange juice at the moment?", a:"Is she drinking"},
+  {p:"Вопросы", s:"________ (we / watch) TV in the living room on Mondays?", a:"Do we watch"},
+  {p:"Вопросы", s:"________ (my friends / go) to school by bus now?", a:"Are my friends going"},
+  {p:"Вопросы", s:"________ (Tom / close) the school gate in the summer?", a:"Does Tom close"},
+  {p:"Вопросы", s:"________ (the cat / sleep) on the rug right now?", a:"Is the cat sleeping"},
+  {p:"Вопросы", s:"________ (the cat / drink) near the door twice a month?", a:"Does the cat drink"},
+  {p:"Вопросы", s:"________ (Ben / sit) next to a friend at the moment?", a:"Is Ben sitting"},
+  {p:"Вопросы", s:"________ (my cat / wait) under the table every day?", a:"Does my cat wait"},
+  {p:"Вопросы", s:"________ (our dog / run) around the garden right now?", a:"Is our dog running"},
+  {p:"Вопросы", s:"________ (I / close) the notebook in the summer?", a:"Do I close"},
+  {p:"Вопросы", s:"________ (our dog / watch) the birds outside at the moment?", a:"Is our dog watching"},
+  {p:"Вопросы", s:"________ (Ben / study) English at school in the evening?", a:"Does Ben study"},
+  {p:"Вопросы", s:"________ (the new student / come) to the sports club twice a month?", a:"Does the new student come"},
+  {p:"Вопросы", s:"________ (our teacher / dance) at the school concert at the moment?", a:"Is our teacher dancing"},
+  {p:"Вопросы", s:"________ (our neighbours / clean) the kitchen table every Friday?", a:"Do our neighbours clean"},
+  {p:"Вопросы", s:"________ (they / wash) the vegetables every Friday?", a:"Do they wash"},
+  {p:"Вопросы", s:"________ (the cat / eat) from a small bowl at the moment?", a:"Is the cat eating"},
+  {p:"Вопросы", s:"________ (Tom / run) to catch the bus right now?", a:"Is Tom running"},
+  {p:"Вопросы", s:"________ (he / draw) a funny cartoon right now?", a:"Is he drawing"},
+  {p:"Вопросы", s:"________ (Ben / do) morning exercises now?", a:"Is Ben doing"},
+  {p:"Вопросы", s:"________ (my best friend / wait) near the school gate on school days?", a:"Does my best friend wait"},
+  {p:"Вопросы", s:"________ (my best friend / brush) the dog’s fur at the moment?", a:"Is my best friend brushing"},
+  {p:"Вопросы", s:"________ (they / dance) at the school concert on Mondays?", a:"Do they dance"},
+  {p:"Вопросы", s:"________ (my parents / come) home at five o’clock at the moment?", a:"Are my parents coming"},
+  {p:"Вопросы", s:"________ (Ben / build) a model bridge in the evening?", a:"Does Ben build"},
+  {p:"Вопросы", s:"________ (the cat / sit) near its bowl on Mondays?", a:"Does the cat sit"},
+  {p:"Вопросы", s:"________ (my brother / shop) in the town centre right now?", a:"Is my brother shopping"},
+  {p:"Вопросы", s:"________ (she / take) an umbrella right now?", a:"Is she taking"},
+  {p:"Вопросы", s:"________ (my sister / drink) milk in the morning at the moment?", a:"Is my sister drinking"},
+  {p:"Вопросы", s:"________ (our dog / drink) water from a bowl before dinner?", a:"Does our dog drink"},
+  {p:"Вопросы", s:"________ (you / visit) an aunt at the moment?", a:"Are you visiting"},
+  {p:"Вопросы", s:"________ (our teacher / come) back from school after school?", a:"Does our teacher come"},
+  {p:"Вопросы", s:"________ (my cat / watch) a fly on the wall on school days?", a:"Does my cat watch"},
+  {p:"Вопросы", s:"________ (the dog / sleep) on the rug at the moment?", a:"Is the dog sleeping"},
+  {p:"Вопросы", s:"________ (the students / use) the computer for homework now?", a:"Are the students using"},
+  {p:"Вопросы", s:"________ (Ben / talk) to a friend on the phone at the moment?", a:"Is Ben talking"},
+  {p:"Вопросы", s:"________ (my parents / come) to the classroom twice a month?", a:"Do my parents come"},
+  {p:"Вопросы", s:"________ (they / sleep) after lunch right now?", a:"Are they sleeping"},
+  {p:"Вопросы", s:"________ (my brother / come) to the classroom every day?", a:"Does my brother come"},
+  {p:"Вопросы", s:"________ (my sister / shop) in the town centre now?", a:"Is my sister shopping"},
+  {p:"Вопросы", s:"________ (Lucy / wash) the vegetables every morning?", a:"Does Lucy wash"},
+  {p:"Вопросы", s:"________ (our teacher / feed) the birds in the garden now?", a:"Is our teacher feeding"},
+  {p:"Вопросы", s:"________ (our neighbours / ride) a new bicycle twice a month?", a:"Do our neighbours ride"},
+  {p:"Вопросы", s:"________ (my best friend / go) to school by bus on Mondays?", a:"Does my best friend go"},
+  {p:"Вопросы", s:"________ (the new student / close) the bedroom door after school?", a:"Does the new student close"},
+  {p:"Вопросы", s:"________ (the dog / eat) from a small bowl before dinner?", a:"Does the dog eat"},
+  {p:"Вопросы", s:"________ (she / visit) a friend after school right now?", a:"Is she visiting"},
+  {p:"Вопросы", s:"________ (Anna and Lucy / do) a maths exercise before dinner?", a:"Do Anna and Lucy do"},
+  {p:"Вопросы", s:"________ (our dog / sit) near its bowl now?", a:"Is our dog sitting"},
+  {p:"Вопросы", s:"________ (our teacher / wait) at the bus stop right now?", a:"Is our teacher waiting"},
+  {p:"Вопросы", s:"________ (our dog / drink) in the kitchen now?", a:"Is our dog drinking"},
+  {p:"Вопросы", s:"________ (he / do) homework at the desk at the moment?", a:"Is he doing"},
+  {p:"Вопросы", s:"________ (you / study) new words after school?", a:"Do you study"},
+  {p:"Вопросы", s:"________ (our neighbours / ride) a scooter in the park now?", a:"Are our neighbours riding"},
+  {p:"Вопросы", s:"________ (Tom and Ben / build) a tower from blocks in the evening?", a:"Do Tom and Ben build"},
+  {p:"Вопросы", s:"________ (she / take) a photo of the class now?", a:"Is she taking"},
+  {p:"Вопросы", s:"________ (my brother / draw) animals in a notebook now?", a:"Is my brother drawing"},
+  {p:"Вопросы", s:"________ (the students / sit) at the front of the class at weekends?", a:"Do the students sit"},
+  {p:"Вопросы", s:"________ (the dog / drink) after a walk right now?", a:"Is the dog drinking"},
+  {p:"Вопросы", s:"________ (the cat / eat) in the kitchen now?", a:"Is the cat eating"},
+  {p:"Вопросы", s:"________ (the children / stand) at the bus stop now?", a:"Are the children standing"},
+  {p:"Вопросы", s:"________ (they / study) for the history test in the summer?", a:"Do they study"},
+  {p:"Вопросы", s:"________ (my cat / watch) the birds outside every morning?", a:"Does my cat watch"},
+  {p:"Вопросы", s:"________ (our dog / sit) under the chair after school?", a:"Does our dog sit"},
+  {p:"Вопросы", s:"________ (he / come) to the sports club once a week?", a:"Does he come"},
+  {p:"Вопросы", s:"________ (we / listen) to a podcast after school?", a:"Do we listen"},
+  {p:"Вопросы", s:"________ (Tom / practise) spelling words in the summer?", a:"Does Tom practise"},
+  {p:"Вопросы", s:"________ (my best friend / draw) animals in a notebook now?", a:"Is my best friend drawing"},
+  {p:"Вопросы", s:"________ (they / prepare) a school presentation at the moment?", a:"Are they preparing"},
+  {p:"Вопросы", s:"________ (he / sit) at the front of the class every morning?", a:"Does he sit"},
+  {p:"Вопросы", s:"________ (I / talk) to a friend on the phone once a week?", a:"Do I talk"},
+  {p:"Вопросы", s:"________ (our teacher / clean) the classroom twice a month?", a:"Does our teacher clean"},
+  {p:"Вопросы", s:"________ (my sister / stand) in front of the class at the moment?", a:"Is my sister standing"},
+  {p:"Вопросы", s:"________ (the new student / listen) to a podcast at the moment?", a:"Is the new student listening"},
+  {p:"Вопросы", s:"________ (he / wear) school uniform every morning?", a:"Does he wear"},
+  {p:"Вопросы", s:"________ (our neighbours / read) a book in the library every day?", a:"Do our neighbours read"},
+  {p:"Вопросы", s:"________ (the dog / eat) in the kitchen in the evening?", a:"Does the dog eat"},
+  {p:"Вопросы", s:"________ (my best friend / learn) how to swim on school days?", a:"Does my best friend learn"},
+  {p:"Вопросы", s:"________ (he / walk) along the river now?", a:"Is he walking"},
+  {p:"Вопросы", s:"________ (the children / dance) to a favourite song in the summer?", a:"Do the children dance"},
+  {p:"Вопросы", s:"________ (Lucy / look) for a missing pencil before dinner?", a:"Does Lucy look"},
+  {p:"Вопросы", s:"________ (Anna / walk) to the sports centre in the summer?", a:"Does Anna walk"},
+  {p:"Вопросы", s:"________ (my cat / run) towards the door on Mondays?", a:"Does my cat run"},
+  {p:"Вопросы", s:"________ (Lucy / talk) to a friend on the phone before dinner?", a:"Does Lucy talk"},
+  {p:"Вопросы", s:"________ (Tom and Ben / open) the classroom window at the moment?", a:"Are Tom and Ben opening"},
+  {p:"Вопросы", s:"________ (Tom and Ben / read) a book in the library every day?", a:"Do Tom and Ben read"},
+  {p:"Вопросы", s:"________ (our dog / sleep) near the window at the moment?", a:"Is our dog sleeping"},
+  {p:"Вопросы", s:"________ (Ben / sleep) with the window open right now?", a:"Is Ben sleeping"},
+  {p:"Вопросы", s:"________ (my friends / cook) vegetable soup now?", a:"Are my friends cooking"},
+  {p:"Вопросы", s:"________ (the students / draw) a funny cartoon now?", a:"Are the students drawing"},
+  {p:"Вопросы", s:"________ (he / go) to the sports club right now?", a:"Is he going"},
+  {p:"Вопросы", s:"________ (she / shop) for food with the family once a week?", a:"Does she shop"},
+  {p:"Вопросы", s:"________ (she / cook) dinner for the family right now?", a:"Is she cooking"},
+  {p:"Вопросы", s:"________ (my sister / work) on a school project twice a month?", a:"Does my sister work"},
+  {p:"Вопросы", s:"________ (my sister / make) a model for science class every Friday?", a:"Does my sister make"},
+  {p:"Вопросы", s:"________ (my best friend / come) to the sports club right now?", a:"Is my best friend coming"},
+  {p:"Вопросы", s:"________ (the children / paint) a poster for school now?", a:"Are the children painting"},
+  {p:"Вопросы", s:"________ (my sister / run) through the park before dinner?", a:"Does my sister run"},
+  {p:"Вопросы", s:"________ (my cat / drink) water from a bowl on school days?", a:"Does my cat drink"},
+  {p:"Вопросы", s:"________ (my best friend / practise) a new dance at the moment?", a:"Is my best friend practising"},
+  {p:"Вопросы", s:"________ (our neighbours / play) a board game with the family right now?", a:"Are our neighbours playing"},
+  {p:"Вопросы", s:"________ (our dog / sleep) under the table right now?", a:"Is our dog sleeping"},
+  {p:"Вопросы", s:"________ (Tom / learn) how to swim right now?", a:"Is Tom learning"},
+  {p:"Вопросы", s:"________ (I / talk) about the school trip right now?", a:"Am I talking"},
+  {p:"Вопросы", s:"________ (Lucy / build) a tower from blocks now?", a:"Is Lucy building"},
+  {p:"Вопросы", s:"________ (we / read) a book in the library at the moment?", a:"Are we reading"},
+  {p:"Вопросы", s:"________ (my cat / drink) water from a bowl right now?", a:"Is my cat drinking"},
+  {p:"Вопросы", s:"________ (the children / have) a music lesson after school?", a:"Do the children have"},
+  {p:"Вопросы", s:"________ (our teacher / play) football in the park right now?", a:"Is our teacher playing"},
+  {p:"Вопросы", s:"________ (the students / sing) with the music teacher at weekends?", a:"Do the students sing"},
+  {p:"Вопросы", s:"________ (my friends / talk) with classmates right now?", a:"Are my friends talking"},
+  {p:"State verbs", s:"________ (she / like) chocolate ice cream?", a:"Does she like"},
+  {p:"State verbs", s:"The students ________ (believe) that the plan will work.", a:"believe"},
+  {p:"State verbs", s:"He ________ (feed) the cat before school now.", a:"is feeding"},
+  {p:"State verbs", s:"My brother ________ (not / draw) a picture of a house right now.", a:"is not drawing"},
+  {p:"State verbs", s:"________ (the students / have) a lot of homework?", a:"Do the students have"},
+  {p:"State verbs", s:"Tom ________ (not / know) a lot about space.", a:"does not know"},
+  {p:"State verbs", s:"________ (we / read) a science article now?", a:"Are we reading"},
+  {p:"State verbs", s:"My sister ________ (not / visit) a friend after school now.", a:"is not visiting"},
+  {p:"State verbs", s:"________ (he / eat) lunch at school right now?", a:"Is he eating"},
+  {p:"State verbs", s:"Anna ________ (not / like) the new teacher in general.", a:"does not like"},
+  {p:"State verbs", s:"________ (we / talk) about the school trip right now?", a:"Are we talking"},
+  {p:"State verbs", s:"My best friend ________ (eat) lunch at school right now.", a:"is eating"},
+  {p:"State verbs", s:"Anna ________ (like) the new teacher.", a:"likes"},
+  {p:"State verbs", s:"Our teacher ________ (not / see) the mountains from the window now.", a:"does not see"},
+  {p:"State verbs", s:"________ (my parents / sing) in the school choir at the moment?", a:"Are my parents singing"},
+  {p:"State verbs", s:"My best friend ________ (not / practise) a new dance right now.", a:"is not practising"},
+  {p:"State verbs", s:"Lucy ________ (understand) this grammar rule at the moment.", a:"understands"},
+  {p:"State verbs", s:"You ________ (not / need) help with the project now.", a:"do not need"},
+  {p:"State verbs", s:"________ (we / come) to the sports club at the moment?", a:"Are we coming"},
+  {p:"State verbs", s:"Ben ________ (not / have) breakfast with the family now.", a:"is not having"},
+  {p:"State verbs", s:"My cat ________ (not / sit) next to me at the moment.", a:"is not sitting"},
+  {p:"State verbs", s:"The students ________ (not / like) the new teacher in general.", a:"do not like"},
+  {p:"State verbs", s:"Anna ________ (know) the answer.", a:"knows"},
+  {p:"State verbs", s:"My parents ________ (walk) along the river now.", a:"are walking"},
+  {p:"State verbs", s:"You ________ (not / see) what you mean at the moment.", a:"do not see"},
+  {p:"State verbs", s:"Our neighbours ________ (not / sing) at the concert now.", a:"are not singing"},
+  {p:"State verbs", s:"My parents ________ (take) an umbrella now.", a:"are taking"},
+  {p:"State verbs", s:"________ (Anna / love) music?", a:"Does Anna love"},
+  {p:"State verbs", s:"You ________ (swim) very fast now.", a:"are swimming"},
+  {p:"State verbs", s:"________ (she / love) summer holidays?", a:"Does she love"},
+  {p:"State verbs", s:"My parents ________ (prefer) tea to coffee.", a:"prefer"},
+  {p:"State verbs", s:"I ________ (understand) this grammar rule.", a:"understand"},
+  {p:"State verbs", s:"Anna and Lucy ________ (not / hate) long queues in general.", a:"do not hate"},
+  {p:"State verbs", s:"My best friend ________ (have) a music lesson at the moment.", a:"is having"},
+  {p:"State verbs", s:"________ (Anna and Lucy / read) an interesting story now?", a:"Are Anna and Lucy reading"},
+  {p:"State verbs", s:"________ (Anna and Lucy / believe) that the plan will work?", a:"Do Anna and Lucy believe"},
+  {p:"State verbs", s:"Our teacher ________ (paint) the garden fence now.", a:"is painting"},
+  {p:"State verbs", s:"Tom ________ (have) a shower at the moment.", a:"is having"},
+  {p:"State verbs", s:"Tom ________ (have) two brothers.", a:"has"},
+  {p:"State verbs", s:"My friends ________ (not / open) the front door right now.", a:"are not opening"},
+  {p:"State verbs", s:"Tom ________ (not / wash) a T-shirt at the moment.", a:"is not washing"},
+  {p:"State verbs", s:"Tom ________ (close) the school gate at the moment.", a:"is closing"},
+  {p:"State verbs", s:"Lucy ________ (not / believe) the story.", a:"does not believe"},
+  {p:"State verbs", s:"________ (my parents / cook) breakfast for everyone at the moment?", a:"Are my parents cooking"},
+  {p:"State verbs", s:"________ (the children / look) through the window at the moment?", a:"Are the children looking"},
+  {p:"State verbs", s:"My brother ________ (love) our family dog.", a:"loves"},
+  {p:"State verbs", s:"My brother ________ (run) in the school race now.", a:"is running"},
+  {p:"State verbs", s:"My parents ________ (have) a pet rabbit.", a:"have"},
+  {p:"State verbs", s:"The students ________ (not / feed) the rabbits at the farm now.", a:"are not feeding"},
+  {p:"State verbs", s:"She ________ (know) the way home now.", a:"knows"},
+  {p:"State verbs", s:"________ (our dog / sit) by the door at the moment?", a:"Is our dog sitting"},
+  {p:"State verbs", s:"________ (my sister / have) a good idea?", a:"Does my sister have"},
+  {p:"State verbs", s:"He ________ (like) English lessons.", a:"likes"},
+  {p:"State verbs", s:"Tom ________ (not / do) the washing-up after dinner at the moment.", a:"is not doing"},
+  {p:"State verbs", s:"She ________ (not / work) on a difficult exercise at the moment.", a:"is not working"},
+  {p:"State verbs", s:"You ________ (eat) an apple at break time now.", a:"are eating"},
+  {p:"State verbs", s:"He ________ (not / hate) loud music in general.", a:"does not hate"},
+  {p:"State verbs", s:"________ (I / understand) the instructions?", a:"Do I understand"},
+  {p:"State verbs", s:"________ (my sister / have) a lot of homework?", a:"Does my sister have"},
+  {p:"State verbs", s:"I ________ (not / love) the school library.", a:"do not love"},
+  {p:"State verbs", s:"________ (the new student / need) a new notebook?", a:"Does the new student need"},
+  {p:"State verbs", s:"________ (he / remember) that day?", a:"Does he remember"},
+  {p:"State verbs", s:"________ (the students / see) the mountains from the window now?", a:"Do the students see"},
+  {p:"State verbs", s:"He ________ (work) on a school project at the moment.", a:"is working"},
+  {p:"State verbs", s:"Our teacher ________ (not / open) the classroom window right now.", a:"is not opening"},
+  {p:"State verbs", s:"Our neighbours ________ (not / prefer) walking to school in general.", a:"do not prefer"},
+  {p:"State verbs", s:"Anna and Lucy ________ (have) two brothers.", a:"have"},
+  {p:"State verbs", s:"My parents ________ (know) a lot about space now.", a:"know"},
+  {p:"State verbs", s:"My parents ________ (need) a new notebook.", a:"need"},
+  {p:"State verbs", s:"My sister ________ (not / have) a good idea.", a:"does not have"},
+  {p:"State verbs", s:"You ________ (study) English at school right now.", a:"are studying"},
+  {p:"State verbs", s:"________ (he / know) this English word now?", a:"Does he know"},
+  {p:"State verbs", s:"She ________ (get) ready for school now.", a:"is getting"},
+  {p:"State verbs", s:"My brother ________ (carry) some books now.", a:"is carrying"},
+  {p:"State verbs", s:"Our neighbours ________ (remember) that day.", a:"remember"},
+  {p:"State verbs", s:"I ________ (love) summer holidays in general.", a:"love"},
+  {p:"State verbs", s:"________ (he / prepare) the classroom for the lesson at the moment?", a:"Is he preparing"},
+  {p:"State verbs", s:"The dog ________ (sit) next to me at the moment.", a:"is sitting"},
+  {p:"State verbs", s:"My cat ________ (not / drink) water from a bowl at the moment.", a:"is not drinking"},
+  {p:"State verbs", s:"Tom ________ (not / want) to go home.", a:"does not want"},
+  {p:"State verbs", s:"My friends ________ (not / see) a bird in the tree at the moment.", a:"do not see"},
+  {p:"State verbs", s:"________ (I / get) a book from the shelf right now?", a:"Am I getting"},
+  {p:"State verbs", s:"My parents ________ (not / paint) a model plane at the moment.", a:"are not painting"},
+  {p:"State verbs", s:"________ (Tom and Ben / prepare) a school presentation right now?", a:"Are Tom and Ben preparing"},
+  {p:"State verbs", s:"Lucy ________ (not / hate) loud music in general.", a:"does not hate"},
+  {p:"State verbs", s:"She ________ (not / remember) that day.", a:"does not remember"},
+  {p:"State verbs", s:"The cat ________ (drink) a little water at the moment.", a:"is drinking"},
+  {p:"State verbs", s:"The students ________ (swim) in the lake now.", a:"are swimming"},
+  {p:"State verbs", s:"________ (my friends / understand) the question now?", a:"Do my friends understand"},
+  {p:"State verbs", s:"________ (Ben / carry) an umbrella now?", a:"Is Ben carrying"},
+  {p:"State verbs", s:"My best friend ________ (not / sing) at the concert at the moment.", a:"is not singing"},
+  {p:"State verbs", s:"Tom and Ben ________ (not / feed) the birds in the garden now.", a:"are not feeding"},
+  {p:"State verbs", s:"________ (Lucy / understand) the question now?", a:"Does Lucy understand"},
+  {p:"State verbs", s:"________ (Lucy / love) our family dog in general?", a:"Does Lucy love"},
+  {p:"State verbs", s:"My brother ________ (practise) a new dance at the moment.", a:"is practising"},
+  {p:"State verbs", s:"________ (they / cook) pasta in the kitchen now?", a:"Are they cooking"},
+  {p:"State verbs", s:"The students ________ (know) the answer now.", a:"know"},
+  {p:"State verbs", s:"My parents ________ (not / have) a music lesson now.", a:"are not having"},
+  {p:"State verbs", s:"My brother ________ (hate) cold weather in general.", a:"hates"},
+  {p:"State verbs", s:"The new student ________ (not / want) some help with maths.", a:"does not want"},
+  {p:"Смешанное", s:"________ (Lucy / eat) lunch at school now?", a:"Is Lucy eating"},
+  {p:"Смешанное", s:"The children ________ (build) a tower from blocks right now.", a:"are building"},
+  {p:"Смешанное", s:"________ (the cat / eat) its food right now?", a:"Is the cat eating"},
+  {p:"Смешанное", s:"The dog ________ (not / run) very fast at the moment.", a:"is not running"},
+  {p:"Смешанное", s:"The children ________ (prepare) lunch at the moment.", a:"are preparing"},
+  {p:"Смешанное", s:"________ (he / listen) to the teacher carefully now?", a:"Is he listening"},
+  {p:"Смешанное", s:"We ________ (not / carry) an umbrella at the moment.", a:"are not carrying"},
+  {p:"Смешанное", s:"My best friend ________ (do) the washing-up after dinner at the moment.", a:"is doing"},
+  {p:"Смешанное", s:"My parents ________ (listen) to music in the bedroom right now.", a:"are listening"},
+  {p:"Смешанное", s:"________ (Tom and Ben / work) in the garden every morning?", a:"Do Tom and Ben work"},
+  {p:"Смешанное", s:"She ________ (not / sing) with the music teacher right now.", a:"is not singing"},
+  {p:"Смешанное", s:"Ben ________ (not / write) the answers in a notebook every day.", a:"does not write"},
+  {p:"Смешанное", s:"________ (the students / look) at a photo at the moment?", a:"Are the students looking"},
+  {p:"Смешанное", s:"They ________ (shop) at the market now.", a:"are shopping"},
+  {p:"Смешанное", s:"We ________ (not / clean) the bike before dinner.", a:"do not clean"},
+  {p:"Смешанное", s:"Anna ________ (do) morning exercises at the moment.", a:"is doing"},
+  {p:"Смешанное", s:"My brother ________ (not / look) through the window now.", a:"is not looking"},
+  {p:"Смешанное", s:"My friends rarely ________ (run) through the park.", a:"run"},
+  {p:"Смешанное", s:"We ________ (not / run) very quickly every Friday.", a:"do not run"},
+  {p:"Смешанное", s:"________ (the children / read) a science article twice a month?", a:"Do the children read"},
+  {p:"Смешанное", s:"She ________ (carry) an umbrella at the moment.", a:"is carrying"},
+  {p:"Смешанное", s:"He ________ (make) a paper plane now.", a:"is making"},
+  {p:"Смешанное", s:"________ (the dog / play) with a ball twice a month?", a:"Does the dog play"},
+  {p:"Смешанное", s:"The children ________ (sit) on a bench on school days.", a:"sit"},
+  {p:"Смешанное", s:"________ (my cat / run) across the room now?", a:"Is my cat running"},
+  {p:"Смешанное", s:"The new student ________ (not / clean) the windows right now.", a:"is not cleaning"},
+  {p:"Смешанное", s:"________ (Anna / wash) the dishes now?", a:"Is Anna washing"},
+  {p:"Смешанное", s:"My friends ________ (work) on a school project at the moment.", a:"are working"},
+  {p:"Смешанное", s:"Lucy ________ (cook) vegetable soup now.", a:"is cooking"},
+  {p:"Смешанное", s:"My brother ________ (run) around the playground now.", a:"is running"},
+  {p:"Смешанное", s:"Tom ________ (not / cook) pasta in the kitchen once a week.", a:"does not cook"},
+  {p:"Смешанное", s:"Ben ________ (brush) teeth after breakfast at the moment.", a:"is brushing"},
+  {p:"Смешанное", s:"________ (Ben / look) at a photo every day?", a:"Does Ben look"},
+  {p:"Смешанное", s:"The dog always ________ (play) in the garden.", a:"plays"},
+  {p:"Смешанное", s:"________ (our neighbours / go) home after class now?", a:"Are our neighbours going"},
+  {p:"Смешанное", s:"We ________ (not / drink) milk in the morning at the moment.", a:"are not drinking"},
+  {p:"Смешанное", s:"________ (you / make) a paper plane before dinner?", a:"Do you make"},
+  {p:"Смешанное", s:"Anna ________ (play) basketball after school at the moment.", a:"is playing"},
+  {p:"Смешанное", s:"The new student rarely ________ (carry) some books.", a:"carries"},
+  {p:"Смешанное", s:"We often ________ (take) the bus to school.", a:"take"},
+  {p:"Смешанное", s:"The students rarely ________ (practise) basketball.", a:"practise"},
+  {p:"Смешанное", s:"Tom ________ (not / learn) ten new English words at the moment.", a:"is not learning"},
+  {p:"Смешанное", s:"________ (our teacher / wear) a green T-shirt in the evening?", a:"Does our teacher wear"},
+  {p:"Смешанное", s:"Lucy ________ (dance) on the stage on school days.", a:"dances"},
+  {p:"Смешанное", s:"The cat sometimes ________ (wait) for us to come home.", a:"waits"},
+  {p:"Смешанное", s:"They ________ (not / draw) a picture of a house after school.", a:"do not draw"},
+  {p:"Смешанное", s:"The new student ________ (not / talk) about the school trip at the moment.", a:"is not talking"},
+  {p:"Смешанное", s:"________ (Tom / come) to visit friends once a week?", a:"Does Tom come"},
+  {p:"Смешанное", s:"________ (my cat / drink) in the kitchen once a week?", a:"Does my cat drink"},
+  {p:"Смешанное", s:"You usually ________ (prepare) a school presentation.", a:"prepare"},
+  {p:"Смешанное", s:"________ (the students / work) on a school project at the moment?", a:"Are the students working"},
+  {p:"Смешанное", s:"Tom and Ben ________ (not / build) a robot for the project twice a month.", a:"do not build"},
+  {p:"Смешанное", s:"My parents ________ (not / draw) animals in a notebook once a week.", a:"do not draw"},
+  {p:"Смешанное", s:"Ben ________ (open) a lunch box on school days.", a:"opens"},
+  {p:"Смешанное", s:"________ (Tom / run) very quickly right now?", a:"Is Tom running"},
+  {p:"Смешанное", s:"The students ________ (answer) the teacher’s question at the moment.", a:"are answering"},
+  {p:"Смешанное", s:"My best friend usually ________ (wash) the vegetables.", a:"washes"},
+  {p:"Смешанное", s:"________ (our dog / run) around the garden now?", a:"Is our dog running"},
+  {p:"Смешанное", s:"________ (you / get) dressed for the party every morning?", a:"Do you get"},
+  {p:"Смешанное", s:"The cat usually ________ (drink) near the door.", a:"drinks"},
+  {p:"Смешанное", s:"Anna and Lucy ________ (clean) the kitchen table right now.", a:"are cleaning"},
+  {p:"Смешанное", s:"My parents sometimes ________ (listen) to the radio.", a:"listen"},
+  {p:"Смешанное", s:"________ (my parents / look) at the homework every Friday?", a:"Do my parents look"},
+  {p:"Смешанное", s:"Tom ________ (look) through the window twice a month.", a:"looks"},
+  {p:"Смешанное", s:"________ (he / read) a science article at the moment?", a:"Is he reading"},
+  {p:"Смешанное", s:"My friends ________ (not / feed) the fish now.", a:"are not feeding"},
+  {p:"Смешанное", s:"________ (my brother / carry) some books after school?", a:"Does my brother carry"},
+  {p:"Смешанное", s:"________ (Lucy / come) to visit friends on Mondays?", a:"Does Lucy come"},
+  {p:"Смешанное", s:"________ (my best friend / eat) a sandwich in the summer?", a:"Does my best friend eat"},
+  {p:"Смешанное", s:"________ (they / build) a model house right now?", a:"Are they building"},
+  {p:"Смешанное", s:"________ (my sister / take) the bus to school right now?", a:"Is my sister taking"},
+  {p:"Смешанное", s:"You ________ (not / play) the guitar in the music room in the evening.", a:"do not play"},
+  {p:"Смешанное", s:"________ (my sister / write) the answers in a notebook at the moment?", a:"Is my sister writing"},
+  {p:"Смешанное", s:"________ (the new student / feed) the cat before school right now?", a:"Is the new student feeding"},
+  {p:"Смешанное", s:"The dog ________ (not / watch) the open door right now.", a:"is not watching"},
+  {p:"Смешанное", s:"The students rarely ________ (have) lunch at school.", a:"have"},
+  {p:"Смешанное", s:"Anna ________ (not / write) a shopping list now.", a:"is not writing"},
+  {p:"Смешанное", s:"Ben ________ (not / play) basketball after school in the evening.", a:"does not play"},
+  {p:"Смешанное", s:"________ (our dog / play) in the garden right now?", a:"Is our dog playing"},
+  {p:"Смешанное", s:"________ (my cat / drink) after a walk after school?", a:"Does my cat drink"},
+  {p:"Смешанное", s:"The dog ________ (sit) next to me now.", a:"is sitting"},
+  {p:"Смешанное", s:"Our dog ________ (sit) near its bowl right now.", a:"is sitting"},
+  {p:"Смешанное", s:"My sister often ________ (do) homework at the desk.", a:"does"},
+  {p:"Смешанное", s:"________ (my friends / dance) on the stage right now?", a:"Are my friends dancing"},
+  {p:"Смешанное", s:"She ________ (not / sing) a new song every Friday.", a:"does not sing"},
+  {p:"Смешанное", s:"My best friend rarely ________ (draw) a map for the project.", a:"draws"},
+  {p:"Смешанное", s:"________ (she / work) with a partner at the moment?", a:"Is she working"},
+  {p:"Смешанное", s:"The new student ________ (not / brush) the dog’s fur now.", a:"is not brushing"},
+  {p:"Смешанное", s:"________ (she / dance) with friends at weekends?", a:"Does she dance"},
+  {p:"Смешанное", s:"________ (the cat / sleep) on the sofa now?", a:"Is the cat sleeping"},
+  {p:"Смешанное", s:"________ (my friends / answer) the phone now?", a:"Are my friends answering"},
+  {p:"Смешанное", s:"My best friend ________ (not / brush) hair in front of the mirror every day.", a:"does not brush"},
+  {p:"Смешанное", s:"The new student ________ (not / watch) a football match at the moment.", a:"is not watching"},
+  {p:"Смешанное", s:"________ (the dog / sit) by the door right now?", a:"Is the dog sitting"},
+  {p:"Смешанное", s:"He sometimes ________ (walk) home from the bus stop.", a:"walks"},
+  {p:"Смешанное", s:"My friends ________ (ride) a new bicycle every day.", a:"ride"},
+  {p:"Смешанное", s:"My best friend often ________ (sing) in the school choir.", a:"sings"},
+  {p:"Смешанное", s:"________ (you / build) a robot for the project after school?", a:"Do you build"},
+  {p:"Смешанное", s:"________ (Tom / stand) outside the shop right now?", a:"Is Tom standing"},
+  {p:"Смешанное", s:"My parents ________ (come) home at five o’clock now.", a:"are coming"},
+  {p:"Смешанное", s:"________ (we / sing) at the concert after school?", a:"Do we sing"},
+  {p:"Смешанное", s:"Anna and Lucy ________ (not / practise) the piano at the moment.", a:"are not practising"},
+  {p:"Смешанное", s:"________ (our neighbours / do) the washing-up after dinner at weekends?", a:"Do our neighbours do"},
+  {p:"Смешанное", s:"Tom and Ben ________ (not / draw) animals in a notebook before dinner.", a:"do not draw"},
+  {p:"Смешанное", s:"He ________ (not / get) some water twice a month.", a:"does not get"},
+  {p:"Смешанное", s:"________ (Lucy / wait) for the school bus at the moment?", a:"Is Lucy waiting"},
+  {p:"Смешанное", s:"He ________ (not / walk) to school at weekends.", a:"does not walk"},
+  {p:"Смешанное", s:"________ (Anna and Lucy / ride) a new bicycle right now?", a:"Are Anna and Lucy riding"},
+  {p:"Смешанное", s:"She usually ________ (open) the front door.", a:"opens"},
+  {p:"Смешанное", s:"My cat ________ (sleep) on the rug right now.", a:"is sleeping"},
+  {p:"Смешанное", s:"________ (the dog / watch) the children at the moment?", a:"Is the dog watching"},
+  {p:"Смешанное", s:"The cat ________ (not / sleep) under the table at the moment.", a:"is not sleeping"},
+  {p:"Смешанное", s:"The students ________ (eat) an apple at break time twice a month.", a:"eat"},
+  {p:"Смешанное", s:"Our neighbours ________ (not / close) the school gate now.", a:"are not closing"},
+  {p:"Смешанное", s:"________ (my brother / use) a tablet at school once a week?", a:"Does my brother use"},
+  {p:"Смешанное", s:"Tom and Ben ________ (not / use) the computer for homework at the moment.", a:"are not using"},
+  {p:"Смешанное", s:"The new student ________ (answer) the phone now.", a:"is answering"},
+  {p:"Смешанное", s:"We ________ (sit) at the kitchen table at the moment.", a:"are sitting"},
+  {p:"Смешанное", s:"Our teacher ________ (open) the classroom window right now.", a:"is opening"},
+  {p:"Смешанное", s:"My friends ________ (not / visit) grandparents right now.", a:"are not visiting"},
+  {p:"Смешанное", s:"________ (we / eat) breakfast in the kitchen on Mondays?", a:"Do we eat"},
+  {p:"Смешанное", s:"The dog ________ (not / watch) the open door after school.", a:"does not watch"},
+  {p:"Смешанное", s:"You ________ (look) through the window before dinner.", a:"look"},
+  {p:"Смешанное", s:"I ________ (feed) the birds in the garden twice a month.", a:"feed"},
+  {p:"Смешанное", s:"Lucy usually ________ (shop) at the market.", a:"shops"},
+  {p:"Смешанное", s:"________ (you / brush) the dog’s fur right now?", a:"Are you brushing"},
+  {p:"Смешанное", s:"Lucy ________ (not / draw) a tree and some flowers at weekends.", a:"does not draw"},
+  {p:"Смешанное", s:"The dog ________ (not / sleep) in a warm basket now.", a:"is not sleeping"},
+  {p:"Смешанное", s:"He ________ (shop) in the town centre at the moment.", a:"is shopping"},
+  {p:"Смешанное", s:"My parents ________ (not / sit) near the window every day.", a:"do not sit"},
+  {p:"Смешанное", s:"My cat always ________ (eat) a little piece of meat.", a:"eats"},
+  {p:"Смешанное", s:"Lucy ________ (come) to visit friends right now.", a:"is coming"},
+  {p:"Смешанное", s:"The students ________ (not / open) a bottle of water in the evening.", a:"do not open"},
+  {p:"Смешанное", s:"The new student ________ (not / answer) an email right now.", a:"is not answering"},
+  {p:"Смешанное", s:"The new student often ________ (use) a dictionary.", a:"uses"},
+  {p:"Смешанное", s:"I ________ (not / wear) a warm hat right now.", a:"am not wearing"},
+  {p:"Смешанное", s:"He ________ (listen) to a new song right now.", a:"is listening"},
+  {p:"Смешанное", s:"________ (our neighbours / talk) about the school trip every Friday?", a:"Do our neighbours talk"},
+  {p:"Смешанное", s:"________ (I / swim) very fast after school?", a:"Do I swim"},
+  {p:"Смешанное", s:"My best friend ________ (not / use) a tablet at school once a week.", a:"does not use"},
+  {p:"Смешанное", s:"________ (the cat / play) under the table now?", a:"Is the cat playing"},
+  {p:"Смешанное", s:"Our dog ________ (sit) by the door at weekends.", a:"sits"},
+  {p:"Смешанное", s:"The new student ________ (not / look) at a photo after school.", a:"does not look"},
+  {p:"Смешанное", s:"Our neighbours ________ (not / ride) a bike near the lake right now.", a:"are not riding"},
+  {p:"Смешанное", s:"She ________ (not / dance) at the school concert once a week.", a:"does not dance"},
+  {p:"Смешанное", s:"They ________ (not / watch) a football match before dinner.", a:"do not watch"},
+  {p:"Смешанное", s:"Anna often ________ (ride) a new bicycle.", a:"rides"},
+  {p:"Смешанное", s:"My friends ________ (ride) a bike near the lake now.", a:"are riding"},
+  {p:"Смешанное", s:"My cat ________ (not / eat) very slowly in the evening.", a:"does not eat"},
+  {p:"Смешанное", s:"________ (Anna / come) back from school twice a month?", a:"Does Anna come"},
+  {p:"Смешанное", s:"________ (our neighbours / play) basketball after school right now?", a:"Are our neighbours playing"},
+  {p:"Смешанное", s:"Anna and Lucy ________ (walk) to the sports centre now.", a:"are walking"},
+  {p:"Смешанное", s:"________ (our neighbours / walk) in the park once a week?", a:"Do our neighbours walk"},
+  {p:"Смешанное", s:"________ (my brother / build) a robot for the project at weekends?", a:"Does my brother build"},
+  {p:"Смешанное", s:"________ (the dog / watch) the open door at the moment?", a:"Is the dog watching"},
+  {p:"Смешанное", s:"We ________ (not / carry) a box to the classroom at the moment.", a:"are not carrying"},
+  {p:"Смешанное", s:"The dog ________ (play) under the table at the moment.", a:"is playing"},
+  {p:"Смешанное", s:"My sister ________ (get) some water right now.", a:"is getting"},
+  {p:"Смешанное", s:"My friends ________ (learn) about animals at the moment.", a:"are learning"},
+  {p:"Смешанное", s:"He ________ (not / watch) the birds in the garden every morning.", a:"does not watch"},
+  {p:"Смешанное", s:"________ (she / draw) a map for the project in the summer?", a:"Does she draw"},
+  {p:"Смешанное", s:"Our dog often ________ (sit) under the chair.", a:"sits"},
+  {p:"Смешанное", s:"Tom and Ben ________ (not / answer) the phone right now.", a:"are not answering"},
+  {p:"Смешанное", s:"The new student ________ (sit) at the front of the class right now.", a:"is sitting"},
+  {p:"Смешанное", s:"The cat often ________ (wait) under the table.", a:"waits"},
+  {p:"Смешанное", s:"He ________ (not / shop) for new school clothes at the moment.", a:"is not shopping"},
+  {p:"Смешанное", s:"The students ________ (not / draw) a picture of a house twice a month.", a:"do not draw"},
+  {p:"Смешанное", s:"Ben ________ (not / shop) for food with the family now.", a:"is not shopping"},
+  {p:"Смешанное", s:"Anna and Lucy ________ (have) a shower right now.", a:"are having"},
+  {p:"Смешанное", s:"Ben ________ (not / sit) next to a friend at the moment.", a:"is not sitting"},
+  {p:"Смешанное", s:"________ (the students / take) the bus to school now?", a:"Are the students taking"},
+  {p:"Смешанное", s:"Our teacher rarely ________ (swim) near the beach.", a:"swims"},
+  {p:"Смешанное", s:"He sometimes ________ (answer) the phone.", a:"answers"},
+  {p:"Смешанное", s:"The new student ________ (not / learn) a poem by heart in the summer.", a:"does not learn"},
+  {p:"Смешанное", s:"The cat ________ (play) near the sofa at the moment.", a:"is playing"},
+  {p:"Смешанное", s:"The students ________ (go) to the sports club now.", a:"are going"},
+  {p:"Смешанное", s:"________ (I / open) the school book now?", a:"Am I opening"},
+  {p:"Смешанное", s:"My best friend ________ (paint) a poster for school at the moment.", a:"is painting"},
+  {p:"Смешанное", s:"My friends always ________ (sleep) in a small room.", a:"sleep"},
+  {p:"Смешанное", s:"We sometimes ________ (carry) some books.", a:"carry"},
+  {p:"Смешанное", s:"My best friend ________ (not / do) the washing-up after dinner right now.", a:"is not doing"},
+  {p:"Смешанное", s:"________ (my best friend / walk) in the park twice a month?", a:"Does my best friend walk"},
+  {p:"Смешанное", s:"Our teacher sometimes ________ (sit) at the kitchen table.", a:"sits"},
+  {p:"Смешанное", s:"They ________ (not / play) football in the park right now.", a:"are not playing"},
+  {p:"Смешанное", s:"My cat ________ (sleep) under the table right now.", a:"is sleeping"},
+  {p:"Смешанное", s:"________ (our dog / wait) under the table once a week?", a:"Does our dog wait"},
+  {p:"Смешанное", s:"My best friend ________ (run) in the school race at the moment.", a:"is running"},
+  {p:"Смешанное", s:"________ (you / sing) in the school choir every morning?", a:"Do you sing"},
+  {p:"Смешанное", s:"Our neighbours ________ (not / wash) a T-shirt on Mondays.", a:"do not wash"},
+  {p:"Смешанное", s:"My best friend ________ (work) at the computer at weekends.", a:"works"},
+  {p:"Смешанное", s:"The new student always ________ (watch) a funny video.", a:"watches"},
+  {p:"Смешанное", s:"Our neighbours ________ (not / draw) a funny cartoon before dinner.", a:"do not draw"},
+  {p:"Смешанное", s:"________ (the cat / run) after a ball after school?", a:"Does the cat run"},
+  {p:"Смешанное", s:"She ________ (have) lunch at school at the moment.", a:"is having"},
+  {p:"Смешанное", s:"You ________ (not / take) an umbrella right now.", a:"are not taking"},
+  {p:"Смешанное", s:"My friends usually ________ (talk) about a new game.", a:"talk"},
+  {p:"Смешанное", s:"My best friend ________ (not / swim) in the school pool every morning.", a:"does not swim"},
+  {p:"Смешанное", s:"The students ________ (not / answer) the phone now.", a:"are not answering"},
+  {p:"Смешанное", s:"My best friend ________ (wear) a blue jacket after school.", a:"wears"},
+  {p:"Смешанное", s:"________ (he / use) the computer for homework once a week?", a:"Does he use"},
+];
+/* ═══ GRAMMAR-BLOCK ENDE ═══ */
+
+
 /* ---------- порядок групп по типу слова ---------- */
 const GRP_ORDER = ["Существительные","Глаголы","Прилагательные","Числа","Другое"];
 
@@ -1306,8 +2167,10 @@ function recordVisit(name){                  // запоминаем имя + в
   try{localStorage.setItem(CUR_KEY,currentName);}catch(e){}
   postToSheet({type:"visit", name:currentName, ts:ts});
 }
+const ACT_LABELS = {quiz:"Диктант", cards:"Карточки", match:"Игра", grammar:"Грамматика"};
 function recordDictation(entry){             // запоминаем один пройденный диктант
   if(!currentKey) return;
+  entry.actLabel = entry.actLabel || ACT_LABELS[entry.act] || "Диктант";  // человекочитаемый тип для таблицы
   studentRec(currentKey).dictations.push(entry);
   saveLog();
   postToSheet(Object.assign({type:"dictation", name:currentName}, entry));
@@ -1360,7 +2223,7 @@ function fmtTime(ms){
 const PRAISE = ["Отлично, верно!","Точно в цель!","Super! Верно!","Молодец!","Именно так!","Great job!"];
 const $ = id => document.getElementById(id);
 const screens = { login:$("scrLogin"), start:$("scrStart"), quiz:$("scrQuiz"), res:$("scrResults"),
-                  cards:$("scrCards"), match:$("scrMatch"), done:$("scrDone"), admin:$("scrAdmin") };
+                  grammar:$("scrGrammar"), cards:$("scrCards"), match:$("scrMatch"), done:$("scrDone"), admin:$("scrAdmin") };
 function show(name){
   Object.values(screens).forEach(s=>s.classList.remove("active"));
   screens[name].classList.add("active");
@@ -1458,8 +2321,9 @@ $("countCustom").addEventListener("input", ()=>{
 function poolWords(){
   return VOCAB.map((w,i)=>({w,i})).filter(o=>selected.has(o.w[dim]));
 }
+function currentPoolSize(){ return section==="grammar" ? grammarPool().length : poolWords().length; }
 function plannedCount(){
-  const pool = poolWords().length;
+  const pool = currentPoolSize();
   if (countChoice==="all") return pool;
   if (countChoice==="custom"){
     const v = parseInt($("countCustom").value);
@@ -1468,13 +2332,19 @@ function plannedCount(){
   return Math.min(parseInt(countChoice), pool);
 }
 function updateSummary(){
-  const pool = poolWords().length;
+  const pool = currentPoolSize();
   const n = plannedCount();
   $("btnStart").disabled = pool===0;
-  const word = dim==="cat" ? "тем" : "групп";
-  $("startSummary").textContent = pool===0
-    ? "Выбери хотя бы одну группу."
-    : "Будет "+n+" слов · выбрано "+selected.size+" "+word+".";
+  if (section==="grammar"){
+    $("startSummary").textContent = pool===0
+      ? "Выбери хотя бы один раздел грамматики."
+      : "Будет "+n+" предложений · выбрано "+selectedParts.size+" разделов.";
+  } else {
+    const word = dim==="cat" ? "тем" : "групп";
+    $("startSummary").textContent = pool===0
+      ? "Выбери хотя бы одну группу."
+      : "Будет "+n+" слов · выбрано "+selected.size+" "+word+".";
+  }
 }
 
 $("modeRuEn").onclick = ()=>{ mode="ruen"; $("modeRuEn").classList.add("selected"); $("modeEnRu").classList.remove("selected"); };
@@ -1496,8 +2366,65 @@ $("actQuiz").onclick  = ()=>setActivity("quiz");
 $("actCards").onclick = ()=>setActivity("cards");
 $("actMatch").onclick = ()=>setActivity("match");
 
-/* общий подбор слов (перемешать / трудные / количество) */
+/* ---------- разделы: словарь / грамматика ---------- */
+let section = "vocab";
+let selectedParts = new Set();
+function gramParts(){ return [...new Set(GRAMMAR.map(g=>g.p))]; }
+function grammarPool(){ return GRAMMAR.map((g,i)=>({g,i})).filter(o=>selectedParts.has(o.g.p)); }
+function buildGramParts(){
+  const grid = $("gramGrid");
+  grid.innerHTML = "";
+  selectedParts = new Set();
+  gramParts().forEach(p=>{
+    const n = GRAMMAR.filter(g=>g.p===p).length;
+    const chip = document.createElement("button");
+    chip.className = "cat-chip selected";      // в грамматике по умолчанию выбраны все разделы
+    chip.innerHTML = p+" <span class='cnt'>"+n+"</span>";
+    chip.onclick = ()=>{
+      chip.classList.toggle("selected");
+      chip.classList.contains("selected") ? selectedParts.add(p) : selectedParts.delete(p);
+      updateSummary();
+    };
+    grid.appendChild(chip);
+    selectedParts.add(p);
+  });
+}
+$("btnAllParts").onclick = ()=>{
+  document.querySelectorAll("#gramGrid .cat-chip").forEach(ch=>ch.classList.add("selected"));
+  gramParts().forEach(p=>selectedParts.add(p)); updateSummary();
+};
+$("btnNoneParts").onclick = ()=>{
+  document.querySelectorAll("#gramGrid .cat-chip").forEach(ch=>ch.classList.remove("selected"));
+  selectedParts.clear(); updateSummary();
+};
+function setSection(s){
+  section = s;
+  $("secVocab").classList.toggle("selected", s==="vocab");
+  $("secGrammar").classList.toggle("selected", s==="grammar");
+  $("vocabOpts").style.display   = s==="vocab" ? "" : "none";
+  $("grammarOpts").style.display = s==="grammar" ? "" : "none";
+  $("rowSpeak").style.display = s==="grammar" ? "none" : "";
+  $("rowHard").style.display  = s==="grammar" ? "none" : "";
+  $("countLabel").textContent = s==="grammar" ? "Сколько предложений" : "Сколько слов";
+  if (s==="grammar"){
+    $("startHead").textContent = "Грамматика: настрой тренировку";
+    $("btnStart").textContent  = "Начать грамматику";
+    $("rowRepeat").style.display = "";        // «повтор ошибок» в грамматике тоже полезен
+  } else {
+    setActivity(activity);                    // вернуть заголовок/кнопку словаря
+  }
+  updateSummary();
+}
+$("secVocab").onclick  = ()=>setSection("vocab");
+$("secGrammar").onclick = ()=>setSection("grammar");
+
+/* общий подбор заданий (перемешать / трудные / количество) */
 function buildOrder(){
+  if (section==="grammar"){
+    let pool = grammarPool().map(o=>o.i);
+    if ($("optShuffle").checked) pool.sort(()=>Math.random()-0.5);
+    return pool.slice(0, plannedCount());
+  }
   let pool = poolWords().map(o=>o.i);
   if ($("optShuffle").checked) pool.sort(()=>Math.random()-0.5);
   if ($("optHard").checked) pool.sort((a,b)=>hardScore(VOCAB[b])-hardScore(VOCAB[a]));
@@ -1508,7 +2435,8 @@ $("btnStart").onclick = ()=>{
   const ord = buildOrder();
   if (!ord.length) return;
   runStartMs = Date.now();
-  if (activity==="cards")      startCards(ord);
+  if (section==="grammar")     startGrammar(ord, false);
+  else if (activity==="cards") startCards(ord);
   else if (activity==="match") startMatch(ord);
   else                         startRun(ord, false);
 };
@@ -1767,15 +2695,21 @@ function finishRun(){
 
   $("btnAgainErrors").style.display = fail>0 ? "" : "none";
   window._lastErrors = all.filter(i=>base[i]==="fail");
+  lastRunKind = "vocab";
+  $("btnAgainSetup").textContent = "Новый диктант (настройки)";
   firstRoundResults = null;
   $("metaCount").textContent = "В наборе: "+VOCAB.length+" слов · выучено: "+learnedCount();
   show("res");
 }
 
+let lastRunKind = "vocab";   // что повторять по кнопке «только ошибки»
 $("btnAgainSetup").onclick = ()=>{ updateSummary(); show("start"); };
 $("btnAgainErrors").onclick = ()=>{
   const bad = window._lastErrors || [];
-  if (bad.length){ runStartMs = Date.now(); startRun(bad, true); }
+  if (!bad.length) return;
+  runStartMs = Date.now();
+  if (lastRunKind==="grammar") startGrammar(bad, true);
+  else startRun(bad, true);
 };
 
 /* ═══════════════════ КАРТОЧКИ (flashcards) ═══════════════════ */
@@ -1936,6 +2870,153 @@ $("matchExit").onclick = ()=>{ clearInterval(matchTimerId); show("start"); };
 $("doneAgain").onclick = ()=>{ if(window._replay) window._replay(); };
 $("doneSetup").onclick = ()=>{ updateSummary(); show("start"); };
 
+/* ═══════════════════ ГРАММАТИКА (Present Simple / Continuous) ═══════════════════ */
+let gramOrder=[], gramPos=0, gramResults={}, gramAttempts={}, gramAnswered={}, gramUserAns={}, gramErrorRound=false, gramFirstResults=null, gramStreak=0;
+
+function normGram(s){
+  return s.trim().toLowerCase().replace(/\s+/g," ").replace(/[’`]/g,"'")
+    .replace(/don't/g,"do not").replace(/doesn't/g,"does not")
+    .replace(/isn't/g,"is not").replace(/aren't/g,"are not")
+    .replace(/i'm/g,"i am").replace(/he's/g,"he is").replace(/she's/g,"she is").replace(/it's/g,"it is")
+    .replace(/they're/g,"they are").replace(/we're/g,"we are").replace(/you're/g,"you are");
+}
+function startGrammar(indices, isErrorRound){
+  gramOrder=[...indices]; gramPos=0; gramStreak=0;
+  gramErrorRound=!!isErrorRound;
+  gramOrder.forEach(i=>{ delete gramResults[i]; delete gramAttempts[i]; delete gramAnswered[i]; delete gramUserAns[i]; });
+  $("gramRound").classList.toggle("show", gramErrorRound);
+  $("gramStreak").classList.remove("show");
+  show("grammar");
+  renderGram();
+}
+function renderGram(){
+  const idx=gramOrder[gramPos], item=GRAMMAR[idx];
+  $("gramTag").textContent=item.p;
+  const cut=item.s.indexOf("________");
+  const before=item.s.slice(0,cut), after=item.s.slice(cut+8);
+  const el=$("gramSentence"); el.className="gram-sentence";
+  el.innerHTML=escapeHtml(before)+"<input class='gram-input' id='gramInput' type='text' autocomplete='off' autocapitalize='off' spellcheck='false' size='18'>"+escapeHtml(after);
+  $("gramNum").textContent=(gramPos+1)+" / "+gramOrder.length;
+  $("gramFill").style.width=(gramPos/gramOrder.length*100)+"%";
+  const fb=$("gramFeedback"); fb.className="feedback"; fb.innerHTML="";
+  $("gramCheck").style.display=""; $("gramNext").style.display="none";
+  $("gramDont").disabled=false;
+  const inp=$("gramInput");
+  inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); $("gramCheck").click(); } });
+  inp.focus();
+}
+function gramToNext(){
+  $("gramCheck").style.display="none";
+  const nxt=$("gramNext"); nxt.style.display=""; nxt.className="ctrl next-btn";
+  nxt.textContent = gramPos<gramOrder.length-1 ? "Дальше →" : "Завершить ✓";
+  $("gramDont").disabled=true;
+}
+function gramFail(idx, prefix){
+  const item=GRAMMAR[idx];
+  gramResults[idx]="fail"; gramAnswered[idx]=true;
+  const inp=$("gramInput"); inp.value=item.a; inp.disabled=true;
+  $("gramSentence").classList.remove("right"); $("gramSentence").classList.add("wrong");
+  const fb=$("gramFeedback"); fb.className="feedback show err";
+  fb.innerHTML=prefix+"<span class='corr'>"+escapeHtml(item.a)+"</span>";
+  gramToNext();
+}
+$("gramCheck").onclick=()=>{
+  const idx=gramOrder[gramPos];
+  if(gramAnswered[idx]){ gramNext(); return; }
+  const item=GRAMMAR[idx];
+  const user=$("gramInput").value;
+  if(!user.trim()){ $("gramInput").focus(); return; }
+  gramUserAns[idx]=user.trim();
+  const fb=$("gramFeedback");
+  if(normGram(user)===normGram(item.a)){
+    gramResults[idx]="ok"; gramAnswered[idx]=true;
+    gramStreak++; updateGramStreak();
+    const inp=$("gramInput"); inp.disabled=true; inp.value=item.a;
+    $("gramSentence").classList.add("right");
+    fb.className="feedback show ok"; fb.innerHTML=PRAISE[Math.floor(Math.random()*PRAISE.length)];
+    gramToNext();
+    return;
+  }
+  gramAttempts[idx]=(gramAttempts[idx]||0)+1;
+  gramStreak=0; updateGramStreak();
+  if(gramAttempts[idx]<2){
+    $("gramSentence").classList.remove("right"); $("gramSentence").classList.add("wrong");
+    fb.className="feedback show err"; fb.innerHTML="Пока не так. Подумай: действие <b>сейчас</b> (am/is/are + -ing) или <b>обычно</b>? Попробуй ещё раз.";
+  } else {
+    gramFail(idx, "Правильно так: ");
+  }
+};
+$("gramDont").onclick=()=>{
+  const idx=gramOrder[gramPos];
+  if(gramAnswered[idx]) return;
+  gramUserAns[idx]="";
+  gramStreak=0; updateGramStreak();
+  gramFail(idx, "Запомни: ");
+};
+function gramNext(){
+  if(gramPos<gramOrder.length-1){ gramPos++; renderGram(); }
+  else finishGrammar();
+}
+$("gramNext").onclick=gramNext;
+$("gramExit").onclick=()=>{ if(confirm("Выйти? Прогресс упражнения пропадёт.")) show("start"); };
+function updateGramStreak(){
+  const el=$("gramStreak");
+  if(gramStreak>=3){ el.textContent="🔥 "+gramStreak; el.classList.add("show"); }
+  else el.classList.remove("show");
+}
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && screens.grammar.classList.contains("active")
+     && $("gramNext").style.display!=="none"
+     && document.activeElement!==$("gramInput")) $("gramNext").click();
+});
+function finishGrammar(){
+  $("gramFill").style.width="100%";
+  const fails=gramOrder.filter(i=>gramResults[i]==="fail");
+  if(!gramErrorRound && fails.length && $("optRepeat").checked){
+    gramFirstResults={...gramResults};
+    startGrammar(fails, true);
+    return;
+  }
+  const base=gramFirstResults||gramResults;
+  const all=Object.keys(base).map(Number);
+  const ok=all.filter(i=>base[i]==="ok").length;
+  const fail=all.filter(i=>base[i]==="fail").length;
+  const pct=all.length?Math.round(ok/all.length*100):0;
+  const elapsed=runStartMs?Date.now()-runStartMs:0;
+  const themes=[...new Set(all.map(i=>GRAMMAR[i].p))];
+
+  $("resHead").textContent = pct===100?"Идеально! 🎉":pct>=70?"Хороший результат! 👍":"Есть над чем поработать 💪";
+  $("resScore").textContent="Грамматика · "+pct+"%"+(gramErrorRound?" · ошибки отработаны":"");
+  $("stOk").textContent=ok; $("stFail").textContent=fail;
+  const list=$("resList"); list.innerHTML="";
+  all.forEach(i=>{
+    const item=GRAMMAR[i];
+    const m=base[i]==="ok"?"✅":"❌";
+    const div=document.createElement("div"); div.className="res-item";
+    div.innerHTML="<span><span class='w-en'>"+escapeHtml(item.a)+"</span> — <span class='w-ru'>"+escapeHtml(item.s.replace('________','___'))+"</span></span><span class='mark'>"+m+"</span>";
+    list.appendChild(div);
+  });
+  const chips=themes.map(t=>"<span class='tchip'>"+escapeHtml(t)+"</span>").join("");
+  $("resMeta").innerHTML="<div class='row'><span class='ic'>📖</span><div><div>Разделы:</div><div class='chips' style='margin-top:5px'>"+chips+"</div></div></div>"
+    +"<div class='row'><span class='ic'>⏱️</span><div><b>Время:</b> <span class='time-val'>"+fmtTime(elapsed)+"</span> · предложений: "+all.length+"</div></div>";
+
+  recordDictation({
+    act:"grammar",
+    finished:Date.now(), durationMs:elapsed,
+    mode:"gram", dim:"cat", themes:themes,
+    total:all.length, correct:ok, wrong:fail, percent:pct,
+    errorRound:gramErrorRound,
+    errors: all.filter(i=>base[i]==="fail").map(i=>({en:GRAMMAR[i].a, ru:gramUserAns[i]||""}))
+  });
+
+  window._lastErrors = all.filter(i=>base[i]==="fail");
+  lastRunKind="grammar";
+  $("btnAgainSetup").textContent="Новая тренировка (настройки)";
+  $("btnAgainErrors").style.display = fail>0 ? "" : "none";
+  gramFirstResults=null;
+  show("res");
+}
+
 /* ---------- вход по имени / выход ---------- */
 function doLogin(){
   const raw = $("nameInput").value.trim();
@@ -2012,7 +3093,7 @@ function renderAdminData(data, note){
     } else {
       [...ds].reverse().forEach(d=>{
         const act = d.act || "quiz";
-        const actLabel = act==="cards" ? "Карточки" : act==="match" ? "Игра" : "Диктант";
+        const actLabel = d.actLabel || ACT_LABELS[act] || "Диктант";
         const okWord = act==="cards" ? "знаю" : "верно";
         const dirMeta = act==="quiz" ? (d.mode==="ruen"?"RU→EN":"EN→RU")+" · " : "";
         html+="<div class='dict-row'>"
@@ -2023,9 +3104,10 @@ function renderAdminData(data, note){
           +"<div class='dict-meta'>⏱ "+fmtTime(d.durationMs)+" · "+dirMeta
             +"ошибок: "+d.wrong+" · темы: "+(d.themes||[]).map(escapeHtml).join(", ")+"</div>";
         if(d.errors&&d.errors.length){
-          html+="<div class='err-words'>"+d.errors.map(e=>
-            "<span class='err-chip'><b>"+escapeHtml(e.en)+"</b> — "+escapeHtml(String(e.ru||"").split(/[,;\/]/)[0])+"</span>"
-          ).join("")+"</div>";
+          html+="<div class='err-words'>"+d.errors.map(e=>{
+            const ru=escapeHtml(String(e.ru||"").split(/[,;\/]/)[0]);
+            return "<span class='err-chip'><b>"+escapeHtml(e.en)+"</b>"+(ru?" — "+ru:"")+"</span>";
+          }).join("")+"</div>";
         }
         html+="</div>";
       });
@@ -2052,15 +3134,15 @@ function csvCell(v){
 function adminSource(){ return (window._adminData && window._adminData.students) ? window._adminData : LOG; }
 function buildCsv(){
   const src=adminSource().students;
-  const rows=[["Ученик","Режим","Дата","Время (сек)","Направление","Всего","Верно","Ошибок","Процент","Работа над ошибками","Темы","Слова с ошибками"]];
-  const actName={quiz:"Диктант",cards:"Карточки",match:"Игра"};
+  const rows=[["Ученик","Режим","Дата","Время (сек)","Направление","Всего","Верно","Ошибок","Процент","Работа над ошибками","Темы","Ошибки"]];
   Object.keys(src).forEach(k=>{
     const s=src[k];
     (s.dictations||[]).forEach(d=>{
-      rows.push([ s.name, actName[d.act||"quiz"]||"Диктант", fmtDateTime(d.finished), Math.round((d.durationMs||0)/1000),
-        (d.act&&d.act!=="quiz")?"—":(d.mode==="ruen"?"RU->EN":"EN->RU"), d.total, d.correct, d.wrong, d.percent+"%",
+      const act=d.act||"quiz";
+      rows.push([ s.name, d.actLabel||ACT_LABELS[act]||"Диктант", fmtDateTime(d.finished), Math.round((d.durationMs||0)/1000),
+        (act!=="quiz")?"—":(d.mode==="ruen"?"RU->EN":"EN->RU"), d.total, d.correct, d.wrong, d.percent+"%",
         d.errorRound?"да":"нет", (d.themes||[]).join(" | "),
-        (d.errors||[]).map(e=>e.en+" ("+String(e.ru||"").split(/[,;\/]/)[0]+")").join(" | ") ]);
+        (d.errors||[]).map(e=>{ const ru=String(e.ru||"").split(/[,;\/]/)[0]; return ru ? e.en+" ("+ru+")" : e.en; }).join(" | ") ]);
     });
   });
   return rows.map(r=>r.map(csvCell).join(",")).join("\r\n");
@@ -2085,6 +3167,8 @@ $("setTitle").textContent = SET_TITLE;
 $("metaCount").textContent = "В наборе: "+VOCAB.length+" слов · выучено: "+learnedCount();
 setDim("cat");
 setActivity("quiz");
+buildGramParts();
+setSection("vocab");
 (function initLogin(){
   let last=""; try{last=localStorage.getItem(CUR_KEY)||"";}catch(e){}
   $("nameInput").value=last;
